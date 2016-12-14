@@ -4,81 +4,119 @@ import cPickle
 import time
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
+from sklearn.decomposition import PCA
 
-start = time.time()
+def get_dataset():
+	train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
+	train_images_filenames = [filename.replace('../../Databases/', '') for filename in train_images_filenames]
+	test_images_filenames = cPickle.load(open('test_images_filenames.dat','r'))
+	test_images_filenames = [filename.replace('../../Databases/', '') for filename in test_images_filenames]
+	train_labels = cPickle.load(open('train_labels.dat','r'))
+	test_labels = cPickle.load(open('test_labels.dat','r'))
 
-# read the train and test files
+	print 'Loaded '+str(len(train_images_filenames))+' training images filenames with classes ',set(train_labels)
+	print 'Loaded '+str(len(test_images_filenames))+' testing images filenames with classes ',set(test_labels)
 
-train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
-train_images_filenames = [filename.replace('../../Databases/', '') for filename in train_images_filenames]
-test_images_filenames = cPickle.load(open('test_images_filenames.dat','r'))
-test_images_filenames = [filename.replace('../../Databases/', '') for filename in test_images_filenames]
-train_labels = cPickle.load(open('train_labels.dat','r'))
-test_labels = cPickle.load(open('test_labels.dat','r'))
+	return train_images_filenames, test_images_filenames, train_labels, test_labels
 
-print 'Loaded '+str(len(train_images_filenames))+' training images filenames with classes ',set(train_labels)
-print 'Loaded '+str(len(test_images_filenames))+' testing images filenames with classes ',set(test_labels)
+def get_feature_detector(name='sift', n_features=100):
+	if name == 'sift':
+		return cv2.SIFT(nfeatures=n_features)
+	else:
+		raise NotImplemented
 
-# create the SIFT detector object
+def extract_features(FEATdetector, train_images_filenames, train_labels, nImages):
+	Train_descriptors = []
+	Train_label_per_descriptor = []
 
-SIFTdetector = cv2.SIFT(nfeatures=100)
+	for i in range(len(train_images_filenames)):
+		filename=train_images_filenames[i]
+		if Train_label_per_descriptor.count(train_labels[i])<nImages:
+			print 'Reading image '+filename
+			ima=cv2.imread(filename)
+			gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
+			kpt,des=FEATdetector.detectAndCompute(gray,None)
+			Train_descriptors.append(des)
+			Train_label_per_descriptor.append(train_labels[i])
+			print str(len(kpt))+' extracted keypoints and descriptors'
 
-# read the just 30 train images per class
-# extract SIFT keypoints and descriptors
-# store descriptors in a python list of numpy arrays
+	# Transform everything to numpy arrays
 
-Train_descriptors = []
-Train_label_per_descriptor = []
+	D=Train_descriptors[0]
+	L=np.array([Train_label_per_descriptor[0]]*Train_descriptors[0].shape[0])
 
-for i in range(len(train_images_filenames)):
-	filename=train_images_filenames[i]
-	if Train_label_per_descriptor.count(train_labels[i])<30:
-		print 'Reading image '+filename
+	for i in range(1,len(Train_descriptors)):
+		D=np.vstack((D,Train_descriptors[i]))
+		L=np.hstack((L,np.array([Train_label_per_descriptor[i]]*Train_descriptors[i].shape[0])))
+
+	return D, L
+
+def train_SVM(kernel, C, D, L):
+	stdSlr = StandardScaler().fit(D)
+	D_scaled = stdSlr.transform(D)
+	print 'Training the SVM classifier...'
+	clf = svm.SVC(kernel='linear', C=1).fit(D_scaled, L)
+	print 'Done!'
+
+	return clf
+
+def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca):
+	numtestimages=0
+	numcorrect=0
+	for i in range(len(test_images_filenames)):
+		filename=test_images_filenames[i]
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-		kpt,des=SIFTdetector.detectAndCompute(gray,None)
-		Train_descriptors.append(des)
-		Train_label_per_descriptor.append(train_labels[i])
-		print str(len(kpt))+' extracted keypoints and descriptors'
+		kpt,des=FEATdetector.detectAndCompute(gray,None)
+		if pca:
+			des = pca.transform(des)
+		predictions = clf.predict(stdSlr.transform(des))
+		values, counts = np.unique(predictions, return_counts=True)
+		predictedclass = values[np.argmax(counts)]
+		print 'image '+filename+' was from class '+test_labels[i]+' and was predicted '+predictedclass
+		numtestimages+=1
+		if predictedclass==test_labels[i]:
+			numcorrect+=1
 
-# Transform everything to numpy arrays
+	return numcorrect, numtestimages
 
-D=Train_descriptors[0]
-L=np.array([Train_label_per_descriptor[0]]*Train_descriptors[0].shape[0])
+def PCA_reduce(D, n_components):
+	print(D.shape)
+	pca = PCA(n_components=20)
+	pca.fit(D)
+	return pca.transform(D), pca
 
-for i in range(1,len(Train_descriptors)):
-	D=np.vstack((D,Train_descriptors[i]))
-	L=np.hstack((L,np.array([Train_label_per_descriptor[i]]*Train_descriptors[i].shape[0])))
+def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, pca_reduction=False):
+	start = time.time()
 
+	# read the train and test files
+	train_images_filenames, test_images_filenames, train_labels, test_labels = get_dataset()
 
-# Train a linear SVM classifier
+	# create the SIFT detector object
+	FEATdetector = get_feature_detector(name='sift', n_features=nfeatures)
 
-stdSlr = StandardScaler().fit(D)
-D_scaled = stdSlr.transform(D)
-print 'Training the SVM classifier...'
-clf = svm.SVC(kernel='linear', C=1).fit(D_scaled, L)
-print 'Done!'
+	# read the just 30 train images per class
+	# extract SIFT keypoints and descriptors
+	# store descriptors in a python list of numpy arrays
+	D, L = extract_features(FEATdetector, train_images_filenames, train_labels, nImages)
 
-# get all the test data and predict their labels
+	if pca_reduction:
+		D, pca = PCA_reduce(D, n_components)
+	else:
+		pca = None
 
-numtestimages=0
-numcorrect=0
-for i in range(len(test_images_filenames)):
-	filename=test_images_filenames[i]
-	ima=cv2.imread(filename)
-	gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-	kpt,des=SIFTdetector.detectAndCompute(gray,None)
-	predictions = clf.predict(stdSlr.transform(des))
-	values, counts = np.unique(predictions, return_counts=True)
-	predictedclass = values[np.argmax(counts)]
-	print 'image '+filename+' was from class '+test_labels[i]+' and was predicted '+predictedclass
-	numtestimages+=1
-	if predictedclass==test_labels[i]:
-		numcorrect+=1
+	print(D.shape)
+	# Train a linear SVM classifier
+	clf = train_SVM(kernel, C, D, L)
 
-print 'Final accuracy: ' + str(numcorrect*100.0/numtestimages)
+	# get all the test data and predict their labels
+	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca)
 
-end=time.time()
-print 'Done in '+str(end-start)+' secs.'
+	print 'Final accuracy: ' + str(numcorrect*100.0/numtestimages)
+
+	end=time.time()
+	print 'Done in '+str(end-start)+' secs.'
 
 ## 38.78% in 797 secs.
+
+main()
