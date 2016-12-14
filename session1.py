@@ -10,7 +10,9 @@ start = time.time()
 # read the train and test files
 
 train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
+train_images_filenames = [filename.replace('../../Databases/', '') for filename in train_images_filenames]
 test_images_filenames = cPickle.load(open('test_images_filenames.dat','r'))
+test_images_filenames = [filename.replace('../../Databases/', '') for filename in test_images_filenames]
 train_labels = cPickle.load(open('train_labels.dat','r'))
 test_labels = cPickle.load(open('test_labels.dat','r'))
 
