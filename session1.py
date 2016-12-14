@@ -58,7 +58,7 @@ def train_SVM(kernel, C, D, L):
 	clf = svm.SVC(kernel='linear', C=1).fit(D_scaled, L)
 	print 'Done!'
 
-	return clf
+	return clf, stdSlr
 
 def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca):
 	numtestimages=0
@@ -107,7 +107,7 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, pca_r
 
 	print(D.shape)
 	# Train a linear SVM classifier
-	clf = train_SVM(kernel, C, D, L)
+	clf, stdSlr = train_SVM(kernel, C, D, L)
 
 	# get all the test data and predict their labels
 	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca)
