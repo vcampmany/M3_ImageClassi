@@ -7,3 +7,5 @@ sklearn (tested on 0.16.1)
 
 Download the dataset an place it into the root folder of the project with the name "MIT_split".
 MIT_split/train and MIT_split/test
+
+idea: load test while training svm

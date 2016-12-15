@@ -5,6 +5,7 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 def get_dataset():
 	train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
@@ -22,6 +23,10 @@ def get_dataset():
 def get_feature_detector(name='sift', n_features=100):
 	if name == 'sift':
 		return cv2.SIFT(nfeatures=n_features)
+	elif name == 'orb':
+		return cv2.ORB(nfeatures=n_features)
+	elif name == 'surf':
+		return cv2.SURF(hessianThreshold=400)
 	else:
 		raise NotImplemented
 
@@ -60,7 +65,7 @@ def train_SVM(kernel, C, D, L):
 
 	return clf, stdSlr
 
-def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca):
+def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer):
 	numtestimages=0
 	numcorrect=0
 	for i in range(len(test_images_filenames)):
@@ -68,8 +73,8 @@ def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca)
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 		kpt,des=FEATdetector.detectAndCompute(gray,None)
-		if pca:
-			des = pca.transform(des)
+		if reducer:
+			des = reducer.transform(des)
 		predictions = clf.predict(stdSlr.transform(des))
 		values, counts = np.unique(predictions, return_counts=True)
 		predictedclass = values[np.argmax(counts)]
@@ -82,35 +87,38 @@ def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca)
 
 def PCA_reduce(D, n_components):
 	print(D.shape)
-	pca = PCA(n_components=20)
+	pca = PCA(n_components=n_components)
 	pca.fit(D)
 	return pca.transform(D), pca
 
-def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, pca_reduction=False):
+def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift'):
 	start = time.time()
 
 	# read the train and test files
 	train_images_filenames, test_images_filenames, train_labels, test_labels = get_dataset()
 
 	# create the SIFT detector object
-	FEATdetector = get_feature_detector(name='sift', n_features=nfeatures)
+	FEATdetector = get_feature_detector(name=features, n_features=nfeatures)
 
 	# read the just 30 train images per class
 	# extract SIFT keypoints and descriptors
 	# store descriptors in a python list of numpy arrays
 	D, L = extract_features(FEATdetector, train_images_filenames, train_labels, nImages)
 
-	if pca_reduction:
-		D, pca = PCA_reduce(D, n_components)
+	if reduction == 'pca':
+		D, reducer = PCA_reduce(D, n_components)
+	elif reduction == 'lda':
+		reducer = LinearDiscriminantAnalysis()
+		D = reducer.fit_transform(D, L)
 	else:
-		pca = None
+		reducer = None
 
 	print(D.shape)
 	# Train a linear SVM classifier
 	clf, stdSlr = train_SVM(kernel, C, D, L)
 
 	# get all the test data and predict their labels
-	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, pca)
+	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer)
 
 	print 'Final accuracy: ' + str(numcorrect*100.0/numtestimages)
 
@@ -119,4 +127,4 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, pca_r
 
 ## 38.78% in 797 secs.
 
-main()
+main(features='sift', reduction='pca', n_components=60)
