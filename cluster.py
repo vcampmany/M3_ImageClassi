@@ -2,7 +2,7 @@ import os, glob
 
 if __name__ == 'main':
     #Cluster parameters
-    queue_name = 'faster_master.q'
+    queue_name = 'fast_master.q'
     memory = '5M'
 
 
