@@ -5,7 +5,6 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import sys
 
 def get_dataset():
@@ -108,9 +107,6 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 
 	if reduction == 'pca':
 		D, reducer = PCA_reduce(D, n_components)
-	elif reduction == 'lda':
-		reducer = LinearDiscriminantAnalysis()
-		D = reducer.fit_transform(D, L)
 	else:
 		reducer = None
 
