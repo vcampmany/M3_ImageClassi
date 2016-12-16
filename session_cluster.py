@@ -5,7 +5,6 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import sys
 
 def get_dataset():
@@ -61,7 +60,7 @@ def train_SVM(kernel, C, D, L):
 	stdSlr = StandardScaler().fit(D)
 	D_scaled = stdSlr.transform(D)
 	print 'Training the SVM classifier...'
-	clf = svm.SVC(kernel=kernel, C=1).fit(D_scaled, L)
+	clf = svm.SVC(kernel='linear', C=1).fit(D_scaled, L)
 	print 'Done!'
 
 	return clf, stdSlr
@@ -92,7 +91,7 @@ def PCA_reduce(D, n_components):
 	pca.fit(D)
 	return pca.transform(D), pca
 
-def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift'):
+def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift', outFile='out'):
 	start = time.time()
 
 	# read the train and test files
@@ -108,9 +107,6 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 
 	if reduction == 'pca':
 		D, reducer = PCA_reduce(D, n_components)
-	elif reduction == 'lda':
-		reducer = LinearDiscriminantAnalysis()
-		D = reducer.fit_transform(D, L)
 	else:
 		reducer = None
 
@@ -126,7 +122,12 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 	end=time.time()
 	print 'Done in '+str(end-start)+' secs.'
 
+	f = open(outFile,'a')
+	f.write('Config= nfeatures:'+nfeatures+' nImages:'+nImages+' n_components:'+n_components+' kernel:'+kernel+ ' c:'+c+ ' reduction:'+reduction+' features:'+features+ '   Final accuracy= ' + str(numcorrect*100.0/numtestimages) + ' Done in '+str(end-start)+' secs.' )
+	f.close()
+
 ## 38.78% in 797 secs.
+
 
 nfeatures = int(sys.argv[1])
 nImages = int(sys.argv[2])
@@ -135,5 +136,6 @@ kernel = str(sys.argv[4])
 c = int(sys.argv[5])
 reduction = str(sys.argv[6])
 features = str(sys.argv[7])
+outFile = str(sys.argv[8])
 
-main(nfeatures, nImages, n_components, kernel, c, reduction, features)
+main(nfeatures, nImages, n_components, kernel, c, reduction, features, outFile)
