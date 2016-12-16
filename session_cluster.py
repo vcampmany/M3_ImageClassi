@@ -76,7 +76,7 @@ def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, redu
 		if reducer:
 			des = reducer.transform(des)
 		predictions = clf.predict(stdSlr.transform(des))
-		values, counts = np.unique(predictions, return_counts=True)
+		values, counts = np.unique(predictions)
 		predictedclass = values[np.argmax(counts)]
 		print 'image '+filename+' was from class '+test_labels[i]+' and was predicted '+predictedclass
 		numtestimages+=1
