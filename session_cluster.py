@@ -92,7 +92,7 @@ def PCA_reduce(D, n_components):
 	pca.fit(D)
 	return pca.transform(D), pca
 
-def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift'):
+def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift', outFile='out'):
 	start = time.time()
 
 	# read the train and test files
@@ -126,6 +126,10 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 	end=time.time()
 	print 'Done in '+str(end-start)+' secs.'
 
+	f = open(outFile,'a')
+	f.write('Config= nfeatures:'+nfeatures+' nImages:'+nImages+' n_components:'+n_components+' kernel:'+kernel+ ' c:'+c+ ' reduction:'+reduction+' features:'+features+ '   Final accuracy= ' + str(numcorrect*100.0/numtestimages) + ' Done in '+str(end-start)+' secs.' )
+	f.close()
+
 ## 38.78% in 797 secs.
 
 
@@ -136,5 +140,6 @@ kernel = str(sys.argv[4])
 c = int(sys.argv[5])
 reduction = str(sys.argv[6])
 features = str(sys.argv[7])
+outFile = str(sys.argv[8])
 
-main(nfeatures, nImages, n_components, kernel, c, reduction, features)
+main(nfeatures, nImages, n_components, kernel, c, reduction, features, outFile)
