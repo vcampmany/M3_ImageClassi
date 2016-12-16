@@ -61,7 +61,7 @@ def train_SVM(kernel, C, D, L):
 	stdSlr = StandardScaler().fit(D)
 	D_scaled = stdSlr.transform(D)
 	print 'Training the SVM classifier...'
-	clf = svm.SVC(kernel='linear', C=1).fit(D_scaled, L)
+	clf = svm.SVC(kernel=kernel, C=1).fit(D_scaled, L)
 	print 'Done!'
 
 	return clf, stdSlr
@@ -127,7 +127,6 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 	print 'Done in '+str(end-start)+' secs.'
 
 ## 38.78% in 797 secs.
-
 
 nfeatures = int(sys.argv[1])
 nImages = int(sys.argv[2])
