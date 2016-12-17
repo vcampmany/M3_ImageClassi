@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-import sys
+import argparse
 
 def get_dataset():
 	train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
@@ -128,12 +128,24 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 
 ## 38.78% in 797 secs.
 
-nfeatures = int(sys.argv[1])
-nImages = int(sys.argv[2])
-n_components = int(sys.argv[3])
-kernel = str(sys.argv[4])
-c = int(sys.argv[5])
-reduction = str(sys.argv[6])
-features = str(sys.argv[7])
+parser = argparse.ArgumentParser()
+parser.add_argument('-n_feat', help='Number of features per image to use', type=int, default=100)
+parser.add_argument('-n_im', help='Number of training images to use', type=int, default=100)
+parser.add_argument('-n_comp', help='Number of features to keep after feature reduction', type=int, default=60)
+parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear')
+parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
+parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
+parser.add_argument('-feats', help='Features to use', type=str, default='sift')
+args = parser.parse_args()
 
-main(nfeatures, nImages, n_components, kernel, c, reduction, features)
+print(args)
+
+nfeatures = args.n_feat
+nImages = args.n_im
+n_components = args.n_comp
+kernel = args.kern
+C = args.C
+reduction = args.reduce
+features = args.feats
+
+main(nfeatures, nImages, n_components, kernel, C, reduction, features)
