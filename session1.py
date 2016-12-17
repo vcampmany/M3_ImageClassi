@@ -130,7 +130,7 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-n_feat', help='Number of features per image to use', type=int, default=100)
-parser.add_argument('-n_im', help='Number of training images to use', type=int, default=100)
+parser.add_argument('-n_im', help='Number of training images to use', type=int, default=30)
 parser.add_argument('-n_comp', help='Number of features to keep after feature reduction', type=int, default=60)
 parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear')
 parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
