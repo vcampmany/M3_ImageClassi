@@ -57,11 +57,16 @@ def extract_features(FEATdetector, train_images_filenames, train_labels, nImages
 
 	return D, L
 
-def train_SVM(kernel, C, D, L):
+def train_SVM(kernel, C, D, L, decision_m):
+	if decision_m == 'maxnum'
+		boolVal = False
+	elif decision_m == 'maxprob'
+		boolVal = True
+		
 	stdSlr = StandardScaler().fit(D)
 	D_scaled = stdSlr.transform(D)
 	print 'Training the SVM classifier...'
-	clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, L)
+	clf = svm.SVC(kernel=kernel, C=C, probability=boolVal).fit(D_scaled, L)
 	print 'Done!'
 
 	return clf, stdSlr
@@ -92,7 +97,7 @@ def PCA_reduce(D, n_components):
 	pca.fit(D)
 	return pca.transform(D), pca
 
-def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift'):
+def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduction=None, features='sift', decision_m='maxnum'):
 	start = time.time()
 
 	# read the train and test files
@@ -116,7 +121,7 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 
 	print(D.shape)
 	# Train a linear SVM classifier
-	clf, stdSlr = train_SVM(kernel, C, D, L)
+	clf, stdSlr = train_SVM(kernel, C, D, L, decision_m)
 
 	# get all the test data and predict their labels
 	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer)
@@ -136,6 +141,7 @@ parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear
 parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
 parser.add_argument('-feats', help='Features to use', type=str, default='sift')
+parser.add_argument('-decision', help='method to label images(values: maxnum, maxprob)', type=str, default='maxnum')
 args = parser.parse_args()
 
 print(args)
@@ -147,5 +153,6 @@ kernel = args.kern
 C = args.C
 reduction = args.reduce
 features = args.feats
+decision_m = args.decision
 
-main(nfeatures, nImages, n_components, kernel, C, reduction, features)
+main(nfeatures, nImages, n_components, kernel, C, reduction, features, decision_m)
