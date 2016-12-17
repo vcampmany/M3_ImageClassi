@@ -61,7 +61,7 @@ def train_SVM(kernel, C, D, L):
 	stdSlr = StandardScaler().fit(D)
 	D_scaled = stdSlr.transform(D)
 	print 'Training the SVM classifier...'
-	clf = svm.SVC(kernel=kernel, C=1).fit(D_scaled, L)
+	clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, L)
 	print 'Done!'
 
 	return clf, stdSlr
