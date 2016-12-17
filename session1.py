@@ -8,6 +8,8 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import argparse
 
+lut = ['Opencountry', 'coast', 'forest', 'highway', 'inside_city', 'mountain', 'street', 'tallbuilding']
+
 def get_dataset():
 	train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
 	train_images_filenames = [filename.replace('../../Databases/', '') for filename in train_images_filenames]
@@ -58,11 +60,11 @@ def extract_features(FEATdetector, train_images_filenames, train_labels, nImages
 	return D, L
 
 def train_SVM(kernel, C, D, L, decision_m):
-	if decision_m == 'maxnum'
+	if decision_m == 'maxnum':
 		boolVal = False
-	elif decision_m == 'maxprob'
+	elif decision_m == 'maxprob':
 		boolVal = True
-		
+
 	stdSlr = StandardScaler().fit(D)
 	D_scaled = stdSlr.transform(D)
 	print 'Training the SVM classifier...'
@@ -71,7 +73,20 @@ def train_SVM(kernel, C, D, L, decision_m):
 
 	return clf, stdSlr
 
-def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer):
+def predict_image_label(decision_m, predictions, probs):
+	global lut
+
+	if decision_m == 'maxnum':
+		values, counts = np.unique(predictions, return_counts=True)
+		predictedclass = values[np.argmax(counts)]
+	elif decision_m == 'maxprob':
+		#values, counts = np.unique(predictions, return_counts=True)
+		#predictedclass = values[np.argmax(counts)]
+		class_means = np.mean(probs, axis=0)
+		predictedclass = lut[np.argmax(class_means)]
+	return predictedclass
+
+def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer, decision_m):
 	numtestimages=0
 	numcorrect=0
 	for i in range(len(test_images_filenames)):
@@ -82,8 +97,14 @@ def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, redu
 		if reducer:
 			des = reducer.transform(des)
 		predictions = clf.predict(stdSlr.transform(des))
-		values, counts = np.unique(predictions, return_counts=True)
-		predictedclass = values[np.argmax(counts)]
+		probs = clf.predict_proba(stdSlr.transform(des))
+		print probs[0]
+		print predictions[0]
+		
+		predictedclass = predict_image_label(decision_m, predictions, probs)
+		#values, counts = np.unique(predictions, return_counts=True)
+		#predictedclass = values[np.argmax(counts)]
+		
 		print 'image '+filename+' was from class '+test_labels[i]+' and was predicted '+predictedclass
 		numtestimages+=1
 		if predictedclass==test_labels[i]:
@@ -124,7 +145,7 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 	clf, stdSlr = train_SVM(kernel, C, D, L, decision_m)
 
 	# get all the test data and predict their labels
-	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer)
+	numcorrect, numtestimages = test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, reducer, decision_m)
 
 	print 'Final accuracy: ' + str(numcorrect*100.0/numtestimages)
 
