@@ -96,7 +96,6 @@ def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, redu
 		kpt,des=FEATdetector.detectAndCompute(gray,None)
 		if reducer:
 			des = reducer.transform(des)
-		predictions = clf.predict(stdSlr.transform(des))
 		if decision_m == 'maxprob':
 			predictions = None
 			probs = clf.predict_proba(stdSlr.transform(des))
