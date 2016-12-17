@@ -97,9 +97,14 @@ def test_SVM(FEATdetector, test_images_filenames, test_labels, clf, stdSlr, redu
 		if reducer:
 			des = reducer.transform(des)
 		predictions = clf.predict(stdSlr.transform(des))
-		probs = clf.predict_proba(stdSlr.transform(des))
-		print probs[0]
-		print predictions[0]
+		if decision_m == 'maxprob':
+			predictions = None
+			probs = clf.predict_proba(stdSlr.transform(des))
+		else:
+			predictions = clf.predict(stdSlr.transform(des))
+			probs = None
+		# print probs[0]
+		# print predictions[0]
 		
 		predictedclass = predict_image_label(decision_m, predictions, probs)
 		#values, counts = np.unique(predictions, return_counts=True)
