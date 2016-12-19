@@ -33,7 +33,7 @@ def get_feature_detector(name='sift', n_features=100):
 	else:
 		raise NotImplemented
 
-def extract_features(FEATdetector, train_images_filenames, train_labels, nImages):
+def extract_features(FEATdetector, train_images_filenames, train_labels, nImages, features, n_features):
 	Train_descriptors = []
 	Train_label_per_descriptor = []
 
@@ -44,6 +44,8 @@ def extract_features(FEATdetector, train_images_filenames, train_labels, nImages
 			ima=cv2.imread(filename)
 			gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 			kpt,des=FEATdetector.detectAndCompute(gray,None)
+			if features == 'surf':
+				des = des[:n_features,:] # debug surf
 			Train_descriptors.append(des)
 			Train_label_per_descriptor.append(train_labels[i])
 			print str(len(kpt))+' extracted keypoints and descriptors'
@@ -134,7 +136,7 @@ def main(nfeatures=100, nImages=30, n_components=20, kernel='linear', C=1, reduc
 	# read the just 30 train images per class
 	# extract SIFT keypoints and descriptors
 	# store descriptors in a python list of numpy arrays
-	D, L = extract_features(FEATdetector, train_images_filenames, train_labels, nImages)
+	D, L = extract_features(FEATdetector, train_images_filenames, train_labels, nImages, features, nfeatures)
 
 	if reduction == 'pca':
 		D, reducer = PCA_reduce(D, n_components)
