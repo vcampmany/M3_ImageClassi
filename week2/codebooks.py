@@ -7,7 +7,7 @@ from sklearn import cluster
 import cPickle
 
 def compute_codebook(D, code_size, nfeatures):
-	code_name = "codebook_"+str(code_size)+"_"+str(nfeatures)+".dat"
+	code_name = "codebooks/codebook_"+str(code_size)+"_"+str(nfeatures)+".dat"
 	if not os.path.isfile(code_name):
 		print 'Computing kmeans with '+str(code_size)+' centroids'
 		init=time.time()
@@ -59,11 +59,9 @@ def main(nfeatures, code_size):
 
 if __name__ == '__main__':
 	params = [
-		(100,512),
-		(200,512),
-		(100,1024),
-		(100,2048),
-		(100,4096),
+		(100,4086),
+		(500,2048),
+		(500,4086),
 	]
 
 	for param in params:
