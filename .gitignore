@@ -1,5 +1,5 @@
 venv/*
 *.zip
 MIT_split
-week2/*.dat
 *.pyc
+./*.dat

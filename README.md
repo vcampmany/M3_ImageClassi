@@ -11,3 +11,8 @@ MIT_split/train and MIT_split/test
 ## Week 2
 The code for week 2 is inside the folder 'week2'.
 Data paths are relative to the root folder. 
+
+The code have been separated in different files:
+ - session2.py: main code
+ - utils.py: generic functions
+ - codebooks.py: functions related to codebooks. When called as main script, it pre-computes some codebooks.
