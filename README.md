@@ -16,3 +16,8 @@ The code have been separated in different files:
  - session2.py: main code
  - utils.py: generic functions
  - codebooks.py: functions related to codebooks. When called as main script, it pre-computes some codebooks.
+ - cross_val.py: uses cross validation instead of test set.
+
+ The cross validation uses 5 folds which has been created previously and stored in "week2/folds".
+
+ All the codebooks computed are stored in "week2/codebooks"
