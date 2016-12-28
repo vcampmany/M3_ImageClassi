@@ -98,4 +98,7 @@ args = parser.parse_args()
 
 print(args)
 
+print('\nWARNING! You probably want to use the script "cross_val.py". This script is only for the final scores in the test set.')
+quit()
+
 main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C,  args.reduce, args.feats)

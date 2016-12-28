@@ -6,8 +6,11 @@ import numpy as np
 from sklearn import cluster
 import cPickle
 
-def compute_codebook(D, code_size, nfeatures):
-	code_name = "codebooks/codebook_"+str(code_size)+"_"+str(nfeatures)+".dat"
+def compute_codebook(D, code_size, nfeatures, fold_i=None):
+	if fold_i is not None:
+		code_name = "codebooks/"+str(code_size)+"_"+str(nfeatures)+"_fold_"+str(fold_i)+".dat"
+	else:
+		code_name = "codebooks/"+str(code_size)+"_"+str(nfeatures)+".dat"
 	if not os.path.isfile(code_name):
 		print 'Computing kmeans with '+str(code_size)+' centroids'
 		init=time.time()
