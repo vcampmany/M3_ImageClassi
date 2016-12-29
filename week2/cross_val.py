@@ -8,6 +8,7 @@ import os.path
 # custom functions
 from codebooks import compute_codebook
 from utils import get_cross_val_dataset
+from features import features_detector
 
 def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift'):
 	start = time.time()
@@ -16,7 +17,7 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 	folds_data = get_cross_val_dataset()
 
 	# create the SIFT detector object
-	SIFTdetector = cv2.SIFT(nfeatures=nfeatures)
+	SIFTdetector = features_detector(nfeatures, features)
 
 	# read all the images per train
 	# extract SIFT keypoints and descriptors
@@ -34,7 +35,11 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 			print 'Reading image '+filename
 			ima=cv2.imread(filename)
 			gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-			kpt,des=SIFTdetector.detectAndCompute(gray,None)
+			# kpt = SIFTdetector.detect(gray,None)
+			# kpt,des=SIFTdetector.compute(gray,kpt)
+
+			kpt, des = SIFTdetector.detect_compute(gray)
+
 			folds_descriptors[index]['descriptors'].append(des)
 			folds_descriptors[index]['label_per_descriptor'].append(fold[1][i])
 			print str(len(kpt))+' extracted keypoints and descriptors'
@@ -60,7 +65,7 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 			startingpoint+=len(Train_descriptors[i])
 
 		# Compute Codebook
-		codebook = compute_codebook(D, code_size, nfeatures, fold_i)
+		codebook = compute_codebook(D, code_size, nfeatures, fold_i, features)
 
 		# get visual words from BoW model
 		init=time.time()
