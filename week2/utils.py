@@ -26,3 +26,8 @@ def get_cross_val_dataset(verbose=True, folds=5):
 		folds_data.append((images_filenames, labels))
 
 	return folds_data
+
+def normalize_vector(vec):
+	normed = vec / vec.sum()
+
+	return normed

@@ -7,7 +7,7 @@ import argparse
 import os.path
 # custom functions
 from codebooks import compute_codebook
-from utils import get_cross_val_dataset
+from utils import get_cross_val_dataset, normalize_vector
 from features import features_detector
 
 def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
@@ -89,22 +89,27 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 				# global level
 				words=codebook.predict(Train_descriptors[i].reshape(-1, size_descriptors))
 				visual_words[i,:code_size]=np.bincount(words,minlength=code_size)
+				visual_words[i,:code_size] = normalize_vector(visual_words[i,:code_size]) # normalize
 
 				# grid square 1
 				words=codebook.predict(Train_descriptors[i][0])
 				visual_words[i,code_size:2*code_size]=np.bincount(words,minlength=code_size)
+				visual_words[i,code_size:2*code_size] = normalize_vector(visual_words[i,code_size:2*code_size]) # normalize
 
 				# grid square 2
 				words=codebook.predict(Train_descriptors[i][1])
 				visual_words[i,2*code_size:3*code_size]=np.bincount(words,minlength=code_size)
+				visual_words[i,2*code_size:3*code_size] = normalize_vector(visual_words[i,2*code_size:3*code_size]) # normalize
 
 				# grid square 3
 				words=codebook.predict(Train_descriptors[i][2])
 				visual_words[i,3*code_size:4*code_size]=np.bincount(words,minlength=code_size)
+				visual_words[i,3*code_size:4*code_size] = normalize_vector(visual_words[i,3*code_size:4*code_size]) # normalize
 				
 				# grid square 4
 				words=codebook.predict(Train_descriptors[i][3])
 				visual_words[i,4*code_size:]=np.bincount(words,minlength=code_size)
+				visual_words[i,4*code_size:] = normalize_vector(visual_words[i,4*code_size:]) # normalize
 			else:
 				words=codebook.predict(Train_descriptors[i].reshape(-1, size_descriptors))
 				visual_words[i,:]=np.bincount(words,minlength=code_size)
@@ -144,22 +149,27 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 				# global level
 				words=codebook.predict(test_images_desc[i].reshape(-1, size_descriptors))
 				visual_words_test[i,:code_size]=np.bincount(words,minlength=code_size)
+				visual_words_test[i,:code_size] = normalize_vector(visual_words_test[i,:code_size]) # normalize
 
 				# grid square 1
 				words=codebook.predict(test_images_desc[i][0])
 				visual_words_test[i,code_size:2*code_size]=np.bincount(words,minlength=code_size)
+				visual_words_test[i,code_size:2*code_size] = normalize_vector(visual_words_test[i,code_size:2*code_size]) # normalize
 
 				# grid square 2
 				words=codebook.predict(test_images_desc[i][1])
 				visual_words_test[i,2*code_size:3*code_size]=np.bincount(words,minlength=code_size)
+				visual_words_test[i,2*code_size:3*code_size] = normalize_vector(visual_words_test[i,2*code_size:3*code_size]) # normalize
 
 				# grid square 3
 				words=codebook.predict(test_images_desc[i][2])
 				visual_words_test[i,3*code_size:4*code_size]=np.bincount(words,minlength=code_size)
+				visual_words_test[i,3*code_size:4*code_size] = normalize_vector(visual_words_test[i,3*code_size:4*code_size]) # normalize
 				
 				# grid square 4
 				words=codebook.predict(test_images_desc[i][3])
 				visual_words_test[i,4*code_size:]=np.bincount(words,minlength=code_size)
+				visual_words_test[i,4*code_size:] = normalize_vector(visual_words_test[i,4*code_size:]) # normalize
 			else:
 				words=codebook.predict(test_images_desc[i].reshape(-1, size_descriptors))
 				visual_words_test[i,:]=np.bincount(words,minlength=code_size)
