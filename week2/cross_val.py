@@ -9,6 +9,7 @@ import os.path
 from codebooks import compute_codebook
 from utils import get_cross_val_dataset, normalize_vector
 from features import features_detector
+from svm_kernels import histogram_intersection
 
 def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
 	start = time.time()
@@ -122,11 +123,15 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 		print 'Done in '+str(end-init)+' secs.'
 
 		# Train a linear SVM classifier
-
 		stdSlr = StandardScaler().fit(visual_words)
 		D_scaled = stdSlr.transform(visual_words)
 		print 'Training the SVM classifier...'
-		clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
+		if kernel == 'linear'
+			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
+		#elif kernel == 'intersection':
+		#	ker_matrix = histogram_intersection(D_scaled, D_scaled)
+		#	clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
+
 		print 'Done!'
 
 		# get all the test data and predict their labels
