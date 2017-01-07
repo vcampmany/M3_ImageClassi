@@ -3,13 +3,16 @@ import numpy as np
 import time
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
+from sklearn import preprocessing
 import argparse
 import os.path
 # custom functions
 from codebooks import compute_codebook
 from utils import get_cross_val_dataset, normalize_vector
 from features import features_detector
+from svm_kernels import histogram_intersection_kernel
 from svm_kernels import histogram_intersection
+
 
 def getDescriptors(SIFTdetector, folds_data, pyramid):
 	folds_descriptors = {}
@@ -124,9 +127,9 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		print 'Training the SVM classifier...'
 		if kernel == 'linear':
 			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
-		#elif kernel == 'intersection':
-		#	ker_matrix = histogram_intersection(D_scaled, D_scaled)
-		#	clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
+		elif kernel == 'intersection':
+			ker_matrix = histogram_intersection(D_scaled, D_scaled)
+			clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
 
 		print 'Done!'
 
@@ -146,6 +149,17 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		accuracies.append(accuracy)
 
+
+		# show histogram instersection kernel
+		#label_encoder_train = preprocessing.LabelEncoder()
+		#label_encoder_train.fit(train_labels)
+
+		#label_encoder_test = preprocessing.LabelEncoder()
+		#label_encoder_test.fit(test_labels)
+
+		#histogram_intersection_kernel(label_encoder_train.transform(train_labels), label_encoder_test.transform(test_labels), C, train_labels)
+		#prediction = histogram_intersection_kernel(label_encoder_train.transform(train_labels), label_encoder_test.transform(test_labels), C, train_labels)
+
 		## 49.56% in 285 secs.
 
 	accuracies = np.asarray(accuracies)
@@ -164,14 +178,15 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 	# read all the images per train
 	# extract SIFT keypoints and descriptors
 	# store descriptors in a python list of numpy arrays
-
 	folds_descriptors = getDescriptors(SIFTdetector, folds_data, pyramid)
-
-	folds_num = 5
-	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid)
-	
 	
 	# now perform de cross-val
+	folds_num = 5
+	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid)
+
+
+	
+
 
 	print('Final accuracy: %f (%f)' % (np.mean(accuracies), np.std(accuracies)))
 
@@ -179,7 +194,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-n_feat', help='Number of features per image to use', type=int, default=100)
 parser.add_argument('-code_size', help='Codebook size', type=int, default=512)
 parser.add_argument('-n_comp', help='Number of features to keep after feature reduction', type=int, default=60)
-parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear')
+parser.add_argument('-kern', help='SVM kernel to use', type=str, default='intersection')
 parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
 parser.add_argument('-feats', help='Features to use', type=str, default='sift')
