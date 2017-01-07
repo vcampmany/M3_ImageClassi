@@ -5,7 +5,7 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from scipy import interp
 
-def show_roc_curve(train_labels, test_labels):
+def show_roc_curve(predictions, test_labels):
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
@@ -13,23 +13,12 @@ def show_roc_curve(train_labels, test_labels):
     n_classes = len(np.unique(test_labels))
     lw = 2
 
-    train_labels= label_binarize(train_labels, classes=['Opencountry','coast','forest','highway','inside_city','mountain','street','tallbuilding'])
+    #train_labels= label_binarize(train_labels, classes=['Opencountry','coast','forest','highway','inside_city','mountain','street','tallbuilding'])
     test_labels= label_binarize(test_labels, classes=['Opencountry','coast','forest','highway','inside_city','mountain','street','tallbuilding'])
 
-
     for i in range(n_classes):
-        fpr[i], tpr[i],_ = roc_curve(train_labels[i], test_labels[i])
+        fpr[i], tpr[i],_ = roc_curve(test_labels[:,i], predictions[:,i])
         roc_auc[i] = auc(fpr[i], tpr[i])
-
-
-    all_fpr = np.unique(np.concatenate([fpr[i] for i in range (n_classes)]))
-
-    mean_tpr = np.zeros_like(all_fpr)
-    for i in range(n_classes):
-        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
-
-    mean_tpr /= n_classes
-
 
     plt.figure()
 
