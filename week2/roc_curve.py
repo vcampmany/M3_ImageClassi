@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import cycle
 from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import label_binarize
+from scipy import interp
 
 def show_roc_curve(train_labels, test_labels):
     fpr = dict()
@@ -10,10 +12,13 @@ def show_roc_curve(train_labels, test_labels):
 
     n_classes = len(np.unique(test_labels))
     lw = 2
-    print('n_classes:')
-    print(n_classes)
+
+    train_labels= label_binarize(train_labels, classes=['Opencountry','coast','forest','highway','inside_city','mountain','street','tallbuilding'])
+    test_labels= label_binarize(test_labels, classes=['Opencountry','coast','forest','highway','inside_city','mountain','street','tallbuilding'])
+
+
     for i in range(n_classes):
-        fpr[i], tpr[i],_ = roc_curve(test_labels[:,i], train_labels[:,i])
+        fpr[i], tpr[i],_ = roc_curve(train_labels[i], test_labels[i])
         roc_auc[i] = auc(fpr[i], tpr[i])
 
 
@@ -26,7 +31,7 @@ def show_roc_curve(train_labels, test_labels):
     mean_tpr /= n_classes
 
 
-    colors = cycle(['aqua', 'darkorange', 'conrflowerblue', 'green', 'red', 'blue'])
+    colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'green', 'red', 'blue'])
     for i, color in zip(range(n_classes), colors):
         plt.plot(fpr[i], tpr[i], color=color, lw=lw, label='ROC curve of class {0} (area = {1:0.2f})'.format(i, roc_auc[i]))
 

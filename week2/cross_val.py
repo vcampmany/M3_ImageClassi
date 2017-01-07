@@ -144,7 +144,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		visual_words_test = detector.getVisualWords(codebook, test_images_desc, size_descriptors, code_size)
 		#show_confusion_mat(clf.predict(stdSlr.transform(visual_words_test)), test_labels)
-		#show_roc_curve(clf.decision_function(stdSlr.transform(visual_words_test)), test_labels)
+		show_roc_curve(clf.predict(stdSlr.transform(visual_words_test)), test_labels)
 
 		if kernel == 'intersection':
 			predictMatrix = histogramIntersectionKernel(stdSlr.transform(visual_words_test), D_scaled)
