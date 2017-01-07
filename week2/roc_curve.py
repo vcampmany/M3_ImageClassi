@@ -31,11 +31,13 @@ def show_roc_curve(train_labels, test_labels):
     mean_tpr /= n_classes
 
 
-    colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'green', 'red', 'blue'])
+    plt.figure()
+
+    colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'green', 'red', 'blue', 'pink'])
     for i, color in zip(range(n_classes), colors):
         plt.plot(fpr[i], tpr[i], color=color, lw=lw, label='ROC curve of class {0} (area = {1:0.2f})'.format(i, roc_auc[i]))
 
-    plt.figure()
+    
     plt.plot([0,1],[0,1], 'k--', lw=lw)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
