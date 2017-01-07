@@ -4,6 +4,7 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn import preprocessing
+
 import argparse
 import os.path
 # custom functions
@@ -12,7 +13,8 @@ from utils import get_cross_val_dataset, normalize_vector
 from features import features_detector
 from svm_kernels import histogram_intersection_kernel
 from svm_kernels import histogram_intersection
-
+from confusion_mat import show_confusion_mat
+from roc_curve import show_roc_curve
 
 def getDescriptors(SIFTdetector, folds_data, pyramid):
 	folds_descriptors = {}
@@ -127,9 +129,9 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		print 'Training the SVM classifier...'
 		if kernel == 'linear':
 			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
-		elif kernel == 'intersection':
-			ker_matrix = histogram_intersection(D_scaled, D_scaled)
-			clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
+		#elif kernel == 'intersection':
+		#	ker_matrix = histogram_intersection(D_scaled, D_scaled)
+		#	clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
 
 		print 'Done!'
 
@@ -139,6 +141,8 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		#visual_words_test=np.zeros((len(test_images_desc),code_size),dtype=np.float32)
 
 		visual_words_test = detector.getVisualWords(codebook, test_images_desc, size_descriptors, code_size)
+		#show_confusion_mat(clf.predict(stdSlr.transform(visual_words_test)), test_labels)
+		show_roc_curve(clf.decision_function(stdSlr.transform(visual_words_test)), test_labels)
 
 		accuracy = 100*clf.score(stdSlr.transform(visual_words_test), test_labels)
 
@@ -194,7 +198,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-n_feat', help='Number of features per image to use', type=int, default=100)
 parser.add_argument('-code_size', help='Codebook size', type=int, default=512)
 parser.add_argument('-n_comp', help='Number of features to keep after feature reduction', type=int, default=60)
-parser.add_argument('-kern', help='SVM kernel to use', type=str, default='intersection')
+parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear')
 parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
 parser.add_argument('-feats', help='Features to use', type=str, default='sift')
