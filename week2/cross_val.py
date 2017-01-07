@@ -10,8 +10,7 @@ import os.path
 from codebooks import compute_codebook
 from utils import get_cross_val_dataset, normalize_vector
 from features import features_detector
-from svm_kernels import histogram_intersection_kernel
-from svm_kernels import histogram_intersection
+from svm_kernels import histogramIntersectionKernel
 
 
 def getDescriptors(SIFTdetector, folds_data, pyramid):
@@ -126,8 +125,9 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		D_scaled = stdSlr.transform(visual_words)
 		print 'Training the SVM classifier...'
 		if kernel == 'intersection':
-			ker_matrix = histogram_intersection(D_scaled, D_scaled)
-			clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
+			ker_matrix = histogramIntersectionKernel(D_scaled, D_scaled)
+			clf = svm.SVC(kernel='precomputed', C=C)
+			clf.fit(ker_matrix, train_labels)
 		else:
 			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
 
@@ -140,7 +140,11 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		visual_words_test = detector.getVisualWords(codebook, test_images_desc, size_descriptors, code_size)
 
-		accuracy = 100*clf.score(stdSlr.transform(visual_words_test), test_labels)
+		if kernel == 'intersection':
+			predictMatrix = histogramIntersectionKernel(stdSlr.transform(visual_words_test), D_scaled)
+			accuracy = 100*clf.score(predictMatrix, test_labels)
+		else:
+			accuracy = 100*clf.score(stdSlr.transform(visual_words_test), test_labels)
 
 		print 'Fold '+str(fold_i)+' accuracy: ' + str(accuracy)
 
