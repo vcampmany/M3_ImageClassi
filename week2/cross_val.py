@@ -77,14 +77,14 @@ class pyramidDetector(object):
 
 			for j in range(4):
 				words=codebook.predict(descriptor[i][j])
-				visual_words[i,codesize*(j+1):code_size*(j+2)] = np.bincount(words,minlength=code_size)
-				visual_words[i,codesize*(j+1):code_size*(j+2)] = normalize_vector(visual_words[i,codesize*(j+1):code_size*(j+2)]) # normalize
+				visual_words[i,code_size*(j+1):code_size*(j+2)] = np.bincount(words,minlength=code_size)
+				visual_words[i,code_size*(j+1):code_size*(j+2)] = normalize_vector(visual_words[i,code_size*(j+1):code_size*(j+2)]) # normalize
 
 		return visual_words
 	
 def getDetector(pyramid):
 	if pyramid:
-		return pyramidDetetor()
+		return pyramidDetector()
 	else:
 		return siftDetector()
 
@@ -127,11 +127,13 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		stdSlr = StandardScaler().fit(visual_words)
 		D_scaled = stdSlr.transform(visual_words)
 		print 'Training the SVM classifier...'
-		if kernel == 'linear':
+
+		if kernel == 'intersection':
+			ker_matrix = histogram_intersection(D_scaled, D_scaled)
+			clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
+		else:
 			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
-		#elif kernel == 'intersection':
-		#	ker_matrix = histogram_intersection(D_scaled, D_scaled)
-		#	clf = svm.SVC(kernel='precomputed', C=C).fit(ker_matrix, train_labels)
+
 
 		print 'Done!'
 
@@ -187,10 +189,6 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 	# now perform de cross-val
 	folds_num = 5
 	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid)
-
-
-	
-
 
 	print('Final accuracy: %f (%f)' % (np.mean(accuracies), np.std(accuracies)))
 
