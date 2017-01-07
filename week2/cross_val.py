@@ -129,10 +129,10 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		if kernel == 'intersection':
 			ker_matrix = histogramIntersectionKernel(D_scaled, D_scaled)
-			clf = svm.SVC(kernel='precomputed', C=C)
-			clf.fit(ker_matrix, train_labels)
+			clf = svm.SVC(kernel='precomputed', C=C, probability=True)
+			clf.fit(ker_matrix, train_labels, probability=True)
 		else:
-			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
+			clf = svm.SVC(kernel=kernel, C=C, probability=True).fit(D_scaled, train_labels)
 
 
 		print 'Done!'
@@ -144,7 +144,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		visual_words_test = detector.getVisualWords(codebook, test_images_desc, size_descriptors, code_size)
 		#show_confusion_mat(clf.predict(stdSlr.transform(visual_words_test)), test_labels)
-		show_roc_curve(clf.predict(stdSlr.transform(visual_words_test)), test_labels)
+		show_roc_curve(clf.predict_proba(stdSlr.transform(visual_words_test)), test_labels)
 
 		if kernel == 'intersection':
 			predictMatrix = histogramIntersectionKernel(stdSlr.transform(visual_words_test), D_scaled)
