@@ -90,6 +90,9 @@ def getDetector(pyramid):
 
 def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid):
 	accuracies = []
+	all_predictions_confmat = []
+	all_predictions_roc = []
+	all_test_labels = []
 	for fold_i in range(folds_num): # 5 folds
 		# Transform everything to numpy arrays
 		Train_descriptors = []
@@ -143,8 +146,15 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		#visual_words_test=np.zeros((len(test_images_desc),code_size),dtype=np.float32)
 
 		visual_words_test = detector.getVisualWords(codebook, test_images_desc, size_descriptors, code_size)
-		#show_confusion_mat(clf.predict(stdSlr.transform(visual_words_test)), test_labels)
-		#show_roc_curve(clf.predict_proba(stdSlr.transform(visual_words_test)), test_labels)
+
+		all_predictions_confmat = np.append(all_predictions_confmat, clf.predict(stdSlr.transform(visual_words_test)))
+
+		if len(all_predictions_roc) == 0:
+			all_predictions_roc = clf.predict_proba(stdSlr.transform(visual_words_test))
+		else: 
+			all_predictions_roc = np.append(all_predictions_roc, clf.predict_proba(stdSlr.transform(visual_words_test)), axis=0)
+		all_test_labels = np.append(all_test_labels, test_labels)
+		my_test_labels = test_labels
 
 		if kernel == 'intersection':
 			predictMatrix = histogramIntersectionKernel(stdSlr.transform(visual_words_test), D_scaled)
@@ -158,19 +168,12 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		print 'Done in '+str(end-start)+' secs.'
 
 		accuracies.append(accuracy)
-
-
-		# show histogram instersection kernel
-		#label_encoder_train = preprocessing.LabelEncoder()
-		#label_encoder_train.fit(train_labels)
-
-		#label_encoder_test = preprocessing.LabelEncoder()
-		#label_encoder_test.fit(test_labels)
-
-		#histogram_intersection_kernel(label_encoder_train.transform(train_labels), label_encoder_test.transform(test_labels), C, train_labels)
-		#prediction = histogram_intersection_kernel(label_encoder_train.transform(train_labels), label_encoder_test.transform(test_labels), C, train_labels)
-
 		## 49.56% in 285 secs.
+
+	all_predictions_roc = all_predictions_roc / folds_num
+
+	show_confusion_mat(all_predictions_confmat, all_test_labels)
+	show_roc_curve(all_predictions_roc, all_test_labels)
 
 	accuracies = np.asarray(accuracies)
 	return accuracies
