@@ -147,17 +147,27 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		visual_words_test = detector.getVisualWords(codebook, test_images_desc, size_descriptors, code_size)
 
-		all_predictions_confmat = np.append(all_predictions_confmat, clf.predict(stdSlr.transform(visual_words_test)))
+		if kernel == 'intersection':
+			predictMatrix = histogramIntersectionKernel(stdSlr.transform(visual_words_test), D_scaled)
+			predictions = clf.predict(predictMatrix)
+		else:
+			predictions = clf.predict(stdSlr.transform(visual_words_test))
+
+		all_predictions_confmat = np.append(all_predictions_confmat, predictions)
+
+		if kernel == 'intersection':
+			predictions_proba = clf.predict_proba(predictMatrix)
+		else:
+			predictions_proba = clf.predict_proba(stdSlr.transform(visual_words_test))
 
 		if len(all_predictions_roc) == 0:
-			all_predictions_roc = clf.predict_proba(stdSlr.transform(visual_words_test))
+			all_predictions_roc = predictions_proba
 		else: 
-			all_predictions_roc = np.append(all_predictions_roc, clf.predict_proba(stdSlr.transform(visual_words_test)), axis=0)
+			all_predictions_roc = np.append(all_predictions_roc, predictions_proba, axis=0)
 		all_test_labels = np.append(all_test_labels, test_labels)
 		my_test_labels = test_labels
 
 		if kernel == 'intersection':
-			predictMatrix = histogramIntersectionKernel(stdSlr.transform(visual_words_test), D_scaled)
 			accuracy = 100*clf.score(predictMatrix, test_labels)
 		else:
 			accuracy = 100*clf.score(stdSlr.transform(visual_words_test), test_labels)
