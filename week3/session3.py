@@ -6,18 +6,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn import svm
 from sklearn import cluster
 from yael import ynumpy
+from utils import get_dataset
 
 start = time.time()
 
 # read the train and test files
-
-train_images_filenames = cPickle.load(open('train_images_filenames.dat','r'))
-test_images_filenames = cPickle.load(open('test_images_filenames.dat','r'))
-train_labels = cPickle.load(open('train_labels.dat','r'))
-test_labels = cPickle.load(open('test_labels.dat','r'))
-
-print 'Loaded '+str(len(train_images_filenames))+' training images filenames with classes ',set(train_labels)
-print 'Loaded '+str(len(test_images_filenames))+' testing images filenames with classes ',set(test_labels)
+train_images_filenames, test_images_filenames, train_labels, test_labels = get_dataset()
 
 # create the SIFT detector object
 
