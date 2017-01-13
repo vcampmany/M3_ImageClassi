@@ -5,6 +5,13 @@
 
 import cv2
 import numpy as np
+from sklearn.decomposition import PCA
+
+def PCA_reduce(D, n_components):
+	print(D.shape)
+	pca = PCA(n_components=n_components)
+	pca.fit(D)
+	return pca.transform(D), pca
 
 def getFoldsDescriptors(SIFTdetector, folds_data, pyramid):
 	folds_descriptors = {}

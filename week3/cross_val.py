@@ -7,11 +7,11 @@ from sklearn import preprocessing
 
 import argparse
 from utils import get_cross_val_dataset, normalize_vector
-from data import getFoldsDescriptors, features_detector
+from data import getFoldsDescriptors, features_detector, PCA_reduce
 from yael import ynumpy
 from codebooks import compute_codebook
 
-def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid, grid_step):
+def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid, grid_step, n_comps, reduction):
 	accuracies = []
 
 	for fold_i in range(folds_num): # 5 folds
@@ -32,13 +32,15 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		for i in range(len(Train_descriptors)):
 			D[startingpoint:startingpoint+len(Train_descriptors[i])]=Train_descriptors[i]
 			startingpoint+=len(Train_descriptors[i])
+		if reduction == 'pca':
+			D, pca_reducer = PCA_reduce(D, n_comps)
 
 		k = code_size
 		# Compute Codebook
-		gmm = compute_codebook(D, k, nfeatures, fold_i, features, grid_step)
+		gmm = compute_codebook(D, k, nfeatures, fold_i, features, grid_step, D.shape[1])
 
 		init=time.time()
-		fisher=np.zeros((len(Train_descriptors),k*128*2),dtype=np.float32)
+		fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2),dtype=np.float32)  #TODO: change 128
 		for i in xrange(len(Train_descriptors)):
 			fisher[i,:]= ynumpy.fisher(gmm, Train_descriptors[i], include = ['mu','sigma'])
 
@@ -57,9 +59,11 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		test_images_desc = folds_descriptors[fold_i]['descriptors']
 		test_labels = folds_descriptors[fold_i]['label_per_descriptor']
 
-		fisher_test=np.zeros((len(test_images_desc),k*128*2),dtype=np.float32)
+		fisher_test=np.zeros((len(test_images_desc),k*D.shape[1]*2),dtype=np.float32)
 		for i in range(len(test_images_desc)):
 			des = test_images_desc[i]
+			if reduction == 'pca':
+				des = pca_reducer.transform(des)
 			fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
 
 		accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
@@ -86,7 +90,7 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 
 	# now perform de cross-val
 	folds_num = 5
-	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid, grid_step)
+	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid, grid_step, n_components, reduction)
 
 	print('Final accuracy: %f (%f)' % (np.mean(accuracies), np.std(accuracies)))
 

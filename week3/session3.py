@@ -8,17 +8,17 @@ from sklearn import cluster
 from yael import ynumpy
 from utils import get_dataset
 import argparse
-from data import getDescriptors, features_detector
+from data import getDescriptors, features_detector, PCA_reduce
 from codebooks import compute_codebook
 
-def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
+def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False, grid_step=6):
 	start = time.time()
 
 	# read the train and test files
 	train_images_filenames, test_images_filenames, train_labels, test_labels = get_dataset()
 
 	# create the SIFT detector object
-	SIFTdetector = features_detector(nfeatures, features)
+	SIFTdetector = features_detector(nfeatures, features, grid_step)
 
 	# extract SIFT keypoints and descriptors
 	# store descriptors in a python list of numpy arrays
@@ -32,13 +32,15 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 	for i in range(len(Train_descriptors)):
 		D[startingpoint:startingpoint+len(Train_descriptors[i])]=Train_descriptors[i]
 		startingpoint+=len(Train_descriptors[i])
+	if reduction == 'pca':
+		D, pca_reducer = PCA_reduce(D, n_components)
 
 	k = code_size
 	# Compute Codebook
-	gmm = compute_codebook(D, k, nfeatures, None, features)
+	gmm = compute_codebook(D, k, nfeatures, None, features, D.shape[1])
 
 	init=time.time()
-	fisher=np.zeros((len(Train_descriptors),k*128*2),dtype=np.float32)
+	fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2),dtype=np.float32)
 	for i in xrange(len(Train_descriptors)):
 		fisher[i,:]= ynumpy.fisher(gmm, Train_descriptors[i], include = ['mu','sigma'])
 
@@ -54,13 +56,15 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 	print 'Done!'
 
 	# get all the test data and predict their labels
-	fisher_test=np.zeros((len(test_images_filenames),k*128*2),dtype=np.float32)
+	fisher_test=np.zeros((len(test_images_filenames),k*D.shape[1]*2),dtype=np.float32)
 	for i in range(len(test_images_filenames)):
 		filename=test_images_filenames[i]
 		print 'Reading image '+filename
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 		kpt,des=SIFTdetector.detect_compute(gray)
+		if reduction == 'pca':
+			des = pca_reducer.transform(des)
 		fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
 
 	accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
@@ -79,10 +83,11 @@ parser.add_argument('-n_comp', help='Number of features to keep after feature re
 parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear')
 parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
-parser.add_argument('-feats', help='Features to use', type=str, default='sift')
+parser.add_argument('-feats', help='Features to use', type=str, default='dense_sift')
+parser.add_argument('-grid_step', help='step of the sift grid', type=int, default=6)
 parser.add_argument('--pyramid', dest='pyramid', action='store_true')
 args = parser.parse_args()
 
 print(args)
 
-main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C, args.reduce, args.feats, args.pyramid)
+main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C, args.reduce, args.feats, args.pyramid, args.grid_step)
