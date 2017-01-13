@@ -60,12 +60,13 @@ def getDescriptors(SIFTdetector, images_filenames, labels, pyramid):
 
 class CustomDetector(object):
 	"""docstring for CustomDetector"""
-	def __init__(self, features, nfeatures):
+	def __init__(self, features, nfeatures, grid_step):
 		super(CustomDetector, self).__init__()
 		self.features = features
 		self.nfeatures = nfeatures
 		self.detector = None
 		self.extractor = None
+		self.grid_step = grid_step
 
 	def set_detector(self):
 		if self.features == 'sift':
@@ -73,7 +74,7 @@ class CustomDetector(object):
 		elif self.features == 'dense_sift':
 			self.detector = cv2.FeatureDetector_create("Dense")
 			# dense.setDouble('initFeatureScale', 10)
-			# dense.setInt('initXyStep', 3)
+			self.detector.setInt('initXyStep', self.grid_step)
 
 	def set_extractor(self):
 		if self.features == 'sift':
@@ -117,8 +118,8 @@ class CustomDetector(object):
 		return kpt, des
 		
 		
-def features_detector(nfeatures=100, features='sift'):
-	detector = CustomDetector(features, nfeatures)
+def features_detector(nfeatures=100, features='sift', grid_step=6):
+	detector = CustomDetector(features, nfeatures, grid_step)
 	detector.set_detector()
 	detector.set_extractor()
 

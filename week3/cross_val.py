@@ -11,7 +11,7 @@ from data import getFoldsDescriptors, features_detector
 from yael import ynumpy
 from codebooks import compute_codebook
 
-def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid):
+def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid, grid_step):
 	accuracies = []
 
 	for fold_i in range(folds_num): # 5 folds
@@ -35,7 +35,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		k = code_size
 		# Compute Codebook
-		gmm = compute_codebook(D, k, nfeatures, fold_i, features)
+		gmm = compute_codebook(D, k, nfeatures, fold_i, features, grid_step)
 
 		init=time.time()
 		fisher=np.zeros((len(Train_descriptors),k*128*2),dtype=np.float32)
@@ -70,14 +70,14 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 	return np.asarray(accuracies)
 
-def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
+def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False, grid_step=6):
 	start = time.time()
 
 	# read the train and test files
 	folds_data = get_cross_val_dataset()
 
 	# create the SIFT detector object
-	SIFTdetector = features_detector(nfeatures, features)
+	SIFTdetector = features_detector(nfeatures, features, grid_step)
 
 	# read all the images per train
 	# extract SIFT keypoints and descriptors
@@ -86,7 +86,7 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 
 	# now perform de cross-val
 	folds_num = 5
-	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid)
+	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,features, pyramid, grid_step)
 
 	print('Final accuracy: %f (%f)' % (np.mean(accuracies), np.std(accuracies)))
 
@@ -97,10 +97,11 @@ parser.add_argument('-n_comp', help='Number of features to keep after feature re
 parser.add_argument('-kern', help='SVM kernel to use', type=str, default='linear')
 parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
-parser.add_argument('-feats', help='Features to use', type=str, default='sift')
+parser.add_argument('-feats', help='Features to use', type=str, default='dense_sift')
+parser.add_argument('-grid_step', help='step of the sift grid', type=int, default=6)
 parser.add_argument('--pyramid', dest='pyramid', action='store_true')
 args = parser.parse_args()
 
 print(args)
 
-main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C, args.reduce, args.feats, args.pyramid)
+main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C, args.reduce, args.feats, args.pyramid, args.grid_step)
