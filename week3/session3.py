@@ -9,6 +9,7 @@ from yael import ynumpy
 from utils import get_dataset
 import argparse
 from data import getDescriptors, features_detector
+from codebooks import compute_codebook
 
 def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
 	start = time.time()
@@ -33,12 +34,8 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 		startingpoint+=len(Train_descriptors[i])
 
 	k = code_size
-
-	print 'Computing gmm with '+str(k)+' centroids'
-	init=time.time()
-	gmm = ynumpy.gmm_learn(np.float32(D), k)
-	end=time.time()
-	print 'Done in '+str(end-init)+' secs.'
+	# Compute Codebook
+	gmm = compute_codebook(D, k, nfeatures, None, features)
 
 	init=time.time()
 	fisher=np.zeros((len(Train_descriptors),k*128*2),dtype=np.float32)

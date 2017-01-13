@@ -9,6 +9,7 @@ import argparse
 from utils import get_cross_val_dataset, normalize_vector
 from data import getFoldsDescriptors, features_detector
 from yael import ynumpy
+from codebooks import compute_codebook
 
 def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid):
 	accuracies = []
@@ -33,12 +34,8 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 			startingpoint+=len(Train_descriptors[i])
 
 		k = code_size
-
-		print 'Computing gmm with '+str(k)+' centroids'
-		init=time.time()
-		gmm = ynumpy.gmm_learn(np.float32(D), k)
-		end=time.time()
-		print 'Done in '+str(end-init)+' secs.'
+		# Compute Codebook
+		gmm = compute_codebook(D, k, nfeatures, fold_i, features)
 
 		init=time.time()
 		fisher=np.zeros((len(Train_descriptors),k*128*2),dtype=np.float32)
