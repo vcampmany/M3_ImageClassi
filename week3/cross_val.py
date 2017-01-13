@@ -34,6 +34,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 			startingpoint+=len(Train_descriptors[i])
 		if reduction == 'pca':
 			D, pca_reducer = PCA_reduce(D, n_comps)
+			des = pca_reducer.transform(Train_descriptors[i])
 
 		k = code_size
 		# Compute Codebook
@@ -42,7 +43,11 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		init=time.time()
 		fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2),dtype=np.float32)  #TODO: change 128
 		for i in xrange(len(Train_descriptors)):
-			fisher[i,:]= ynumpy.fisher(gmm, Train_descriptors[i], include = ['mu','sigma'])
+			if reduction == 'pca':
+				des = pca_reducer.transform(Train_descriptors[i])
+			else:
+				des = Train_descriptors[i]
+			fisher[i,:]= ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
 			# fisher[i,:]= l2
 
 		end=time.time()
@@ -66,7 +71,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 			des = test_images_desc[i]
 			if reduction == 'pca':
 				des = pca_reducer.transform(des)
-			fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
+			fisher_test[i,:]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
 
 		accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
 
