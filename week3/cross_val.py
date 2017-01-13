@@ -64,6 +64,8 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
 
+		print 'Fold '+str(fold_i)+' accuracy: ' + str(accuracy)
+
 		accuracies.append(accuracy)
 
 	return np.asarray(accuracies)
