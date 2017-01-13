@@ -6,8 +6,35 @@
 import cv2
 import numpy as np
 
-def getDescriptors(SIFTdetector, images_filenames, labels, pyramid):
+def getFoldsDescriptors(SIFTdetector, folds_data, pyramid):
+	folds_descriptors = {}
 
+	for index,fold in enumerate(folds_data):
+		folds_descriptors[index] = {
+			'descriptors': [],
+			'label_per_descriptor': []
+		}
+		for i in xrange(len(fold[0])):
+			filename=fold[0][i]
+			print 'Reading image '+filename
+			ima=cv2.imread(filename)
+			gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
+
+			# depending on the parameter pyramid, the variables returned are different
+			# for pyramid=False, kpt and des are lists of keypoints and descriptors (1D)
+			# for pyramid=True, kpt and des are a list of 4 lists of keypoints and descriptors (2D)
+			kpt, des = SIFTdetector.detect_compute(gray, pyramid)
+
+			folds_descriptors[index]['descriptors'].append(des)
+			folds_descriptors[index]['label_per_descriptor'].append(fold[1][i])
+			if pyramid:
+				print str(kpt.shape[0]*kpt.shape[1])+' extracted keypoints and descriptors'
+			else:
+				print str(len(kpt))+' extracted keypoints and descriptors'
+
+	return folds_descriptors
+
+def getDescriptors(SIFTdetector, images_filenames, labels, pyramid):
 	descriptors = []
 	label_per_descriptor = []
 

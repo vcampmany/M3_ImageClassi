@@ -8,7 +8,7 @@ from sklearn import cluster
 from yael import ynumpy
 from utils import get_dataset
 import argparse
-from data import getDescriptors, features_detector, CustomDetector
+from data import getDescriptors, features_detector
 
 def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
 	start = time.time()
@@ -32,7 +32,6 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 		D[startingpoint:startingpoint+len(Train_descriptors[i])]=Train_descriptors[i]
 		startingpoint+=len(Train_descriptors[i])
 
-
 	k = code_size
 
 	print 'Computing gmm with '+str(k)+' centroids'
@@ -41,17 +40,13 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 	end=time.time()
 	print 'Done in '+str(end-init)+' secs.'
 
-
-
 	init=time.time()
 	fisher=np.zeros((len(Train_descriptors),k*128*2),dtype=np.float32)
 	for i in xrange(len(Train_descriptors)):
 		fisher[i,:]= ynumpy.fisher(gmm, Train_descriptors[i], include = ['mu','sigma'])
 
-
 	end=time.time()
 	print 'Done in '+str(end-init)+' secs.'
-
 
 	# Train a linear SVM classifier
 
@@ -70,7 +65,6 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 		kpt,des=SIFTdetector.detect_compute(gray)
 		fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
-
 
 	accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
 
