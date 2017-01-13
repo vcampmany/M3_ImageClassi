@@ -8,6 +8,7 @@ from sklearn import cluster
 from yael import ynumpy
 from utils import get_dataset
 import argparse
+from data import getDescriptors, features_detector, CustomDetector
 
 def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False):
 	start = time.time()
@@ -16,24 +17,12 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 	train_images_filenames, test_images_filenames, train_labels, test_labels = get_dataset()
 
 	# create the SIFT detector object
-
-	SIFTdetector = cv2.SIFT(nfeatures=nfeatures)
+	SIFTdetector = features_detector(nfeatures, features)
 
 	# extract SIFT keypoints and descriptors
 	# store descriptors in a python list of numpy arrays
 
-	Train_descriptors = []
-	Train_label_per_descriptor = []
-
-	for i in range(len(train_images_filenames)):
-		filename=train_images_filenames[i]
-		print 'Reading image '+filename
-		ima=cv2.imread(filename)
-		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-		kpt,des=SIFTdetector.detectAndCompute(gray,None)
-		Train_descriptors.append(des)
-		Train_label_per_descriptor.append(train_labels[i])
-		print str(len(kpt))+' extracted keypoints and descriptors'
+	Train_descriptors, Train_label_per_descriptor = getDescriptors(SIFTdetector, train_images_filenames, train_labels, pyramid)
 
 	# Transform everything to numpy arrays
 	size_descriptors=Train_descriptors[0].shape[1]
@@ -79,7 +68,7 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 		print 'Reading image '+filename
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-		kpt,des=SIFTdetector.detectAndCompute(gray,None)
+		kpt,des=SIFTdetector.detect_compute(gray)
 		fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
 
 

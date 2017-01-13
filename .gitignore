@@ -3,3 +3,4 @@ venv/*
 MIT_split
 *.pyc
 ./*.dat
+week3/path_yael.sh
