@@ -1,4 +1,5 @@
 import cPickle
+from sklearn import preprocessing
 
 def get_dataset(verbose=True):
 	train_images_filenames = cPickle.load(open('../train_images_filenames.dat','r'))
@@ -28,6 +29,12 @@ def get_cross_val_dataset(verbose=True, folds=5):
 	return folds_data
 
 def normalize_vector(vec):
-	normed = vec / vec.sum()
+	normed = vec.astype(np.float32) / vec.sum()
 
 	return normed
+
+def l2_normalize_vector(vec):
+	return normalize(vec, norm='l2').squeeze()
+
+def l1_normalize_vector(vec):
+	return normalize(vec, norm='l1').squeeze()

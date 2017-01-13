@@ -43,9 +43,11 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2),dtype=np.float32)  #TODO: change 128
 		for i in xrange(len(Train_descriptors)):
 			fisher[i,:]= ynumpy.fisher(gmm, Train_descriptors[i], include = ['mu','sigma'])
+			# fisher[i,:]= l2
 
 		end=time.time()
 		print 'Done in '+str(end-init)+' secs.'
+
 
 		# Train a linear SVM classifier
 
