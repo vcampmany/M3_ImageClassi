@@ -33,7 +33,7 @@ def getFoldsDescriptors(SIFTdetector, folds_data, pyramid):
 			folds_descriptors[index]['descriptors'].append(des)
 			folds_descriptors[index]['label_per_descriptor'].append(fold[1][i])
 
-			print str(len(kpt)*len(kpt[0]))+' extracted keypoints and descriptors'
+			print str(sum([len(level) for level in kpt]))+' extracted keypoints and descriptors'
 
 	return folds_descriptors
 
@@ -52,7 +52,7 @@ def getDescriptors(SIFTdetector, images_filenames, labels, pyramid):
 
 		descriptors.append(des)
 		label_per_descriptor.append(labels[i])
-		print str(len(kpt)*len(kpt[0]))+' extracted keypoints and descriptors'
+		print str(sum([len(level) for level in kpt]))+' extracted keypoints and descriptors'
 
 	return descriptors, label_per_descriptor
 
@@ -98,46 +98,39 @@ class CustomDetector(object):
 		keypoints = [kpt]
 		descriptors = [des]
 
-		# if pyramid:
+		if pyramid: # extract more levels
+			levels = [(2,2)]
 
-		# 	# level 0
-		# 	keypoints = [kpt]
-		# 	descriptors = [des]
+			for level in levels:
+				x_divisions, y_divisions = level
 
-		# 	config = [(2,2),(3,3)]
+				min_limit_x, min_limit_y = 0,0
+				max_limit_x, max_limit_y = gray.shape
 
-		# 	for level in range()
+				nbins = x_divisions*y_divisions # number of spatial bins
+				# initialize lists for this level
+				kpt_level_bins = [[[] for yi in range(y_divisions)] for xi in range(x_divisions)]
+				des_level_bins = [[[] for yi in range(y_divisions)] for xi in range(x_divisions)]
 
-		# 	print(gray.shape)
-		# 	print(len(kpt))
-		# 	print(kpt[0].pt)
-		# 	print(kpt[0].octave)
-		# 	print(kpt[-1].pt)
-		# 	print(kpt[-1].octave)
+				x_step = max_limit_x / float(x_divisions)
+				y_step = max_limit_y / float(y_divisions)
 
-		# 	quit()
+				for x_div in range(x_divisions):
+					for y_div in range(y_divisions):
+						for i, kp in enumerate(kpt):
+							min_x,max_x = x_step*x_div, x_step*(x_div+1)
+							min_y,max_y = y_step*y_div, y_step*(y_div+1)
+							# check if this keypoint belongs to the current bin
+							if (kp.pt[0] >= min_x and kp.pt[0] < max_x) and (kp.pt[1] >= min_y and kp.pt[1] < max_y):
+								# it belongs!
+								kpt_level_bins[x_div][y_div].append(kpt[i])
+								des_level_bins[x_div][y_div].append(des[i])
 
-		# 	kpt = []
-		# 	des = []
-		# 	middle_x = int(gray.shape[0]/2.0)
-		# 	middle_y = int(gray.shape[1]/2.0)
-			
-		# 	# extract keyoints and descriptors by level in a 2x2 grid
-		# 	#########
-		# 	# 1 | 2 #
-		# 	# ----- #
-		# 	# 3 | 4 #
-		# 	#########
-
-		# 	level1_kpt, level1_des = self.get_descriptors(gray[:middle_x, :middle_y])
-		# 	level2_kpt, level2_des = self.get_descriptors(gray[middle_x:, :middle_y])
-		# 	level3_kpt, level3_des = self.get_descriptors(gray[:middle_x, middle_y:])
-		# 	level4_kpt, level4_des = self.get_descriptors(gray[middle_x:, middle_y:])
-
-		# 	kpt = np.asarray([level1_kpt, level2_kpt, level3_kpt, level4_kpt])
-		# 	des = np.asarray([level1_des, level2_des, level3_des, level4_des])
-		# else:
-		# 	kpt, des = self.get_descriptors(gray)
+				# now append the bin descriptors and keypoints
+				for x_div in range(x_divisions):
+					for y_div in range(y_divisions):
+						keypoints.append(kpt_level_bins[x_div][y_div])
+						descriptors.append(des_level_bins[x_div][y_div])
 
 		return keypoints, descriptors
 		

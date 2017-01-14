@@ -27,8 +27,12 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 		Train_descriptors = np.asarray(Train_descriptors)
 
+		# print(Train_descriptors.shape)
+		# print(Train_descriptors[0][0].shape)
+		# quit()
+
 		# Transform everything to numpy arrays
-		size_descriptors=Train_descriptors.shape[-1]
+		size_descriptors=Train_descriptors[0][0].shape[-1]
 		# for D we only need the first level of the pyramid (because it already contains all points)
 		D=np.zeros((np.sum([len(p[0]) for p in Train_descriptors]),size_descriptors),dtype=np.uint8)
 		startingpoint=0
