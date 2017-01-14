@@ -47,14 +47,15 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		gmm = compute_codebook(D, k, nfeatures, fold_i, features, grid_step, D.shape[1])
 
 		init=time.time()
-		fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2),dtype=np.float32)  #TODO: change 128
+		fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2*Train_descriptors.shape[1]),dtype=np.float32)  #TODO: change 128
 		for i in xrange(len(Train_descriptors)):
-			if reduction == 'pca':
-				des = pca_reducer.transform(Train_descriptors[i][0]) # now only working with 1 PYRAMID LEVEL [0]
-			else:
-				des = Train_descriptors[i][0] # now only working with 1 PYRAMID LEVEL [0]
-			fisher[i,:]= ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
-			# fisher[i,:]= l2
+			for j in range(Train_descriptors.shape[1]): #number of levels
+				if reduction == 'pca':
+					des = pca_reducer.transform(Train_descriptors[i][j]) # for pyramid level j
+				else:
+					des = Train_descriptors[i][j] # for pyramid level j
+				fisher[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]= ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
+				# fisher[i,:]= l2
 
 		end=time.time()
 		print 'Done in '+str(end-init)+' secs.'
@@ -72,12 +73,15 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		test_images_desc = folds_descriptors[fold_i]['descriptors']
 		test_labels = folds_descriptors[fold_i]['label_per_descriptor']
 
-		fisher_test=np.zeros((len(test_images_desc),k*D.shape[1]*2),dtype=np.float32)
+		test_images_desc = np.asarray(test_images_desc)
+
+		fisher_test=np.zeros((len(test_images_desc),k*D.shape[1]*2*test_images_desc.shape[1]),dtype=np.float32)
 		for i in range(len(test_images_desc)):
-			des = test_images_desc[i][0] # now only working with 1 PYRAMID LEVEL [0]
-			if reduction == 'pca':
-				des = pca_reducer.transform(des)
-			fisher_test[i,:]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
+			for j in range(test_images_desc.shape[1]): #number of levels
+				des = test_images_desc[i][j] # now only working with 1 PYRAMID LEVEL [0]
+				if reduction == 'pca':
+					des = pca_reducer.transform(des)
+				fisher_test[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
 
 		accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
 
