@@ -22,3 +22,6 @@ by
     }
 
  Source: https://gforge.inria.fr/forum/forum.php?thread_id=33378&forum_id=6337&group_id=2151
+
+To call with pyramid add:
+`-pyramid 2 2` To create a spatial pyramid of 2 by 2

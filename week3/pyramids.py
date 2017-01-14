@@ -46,3 +46,21 @@ def extract_pyramid_bins(levels, kpt, des, dimensions):
 				descriptors += lower_des
 
 	return keypoints, descriptors
+
+def get_levels(pyramid):
+	'''
+	This function takes as input a list like [2,2,3,3,2,2]
+	and returns [[2,2], [3,3], [2,2]] which is the format to define
+	pyramid levels
+	'''
+	# pyramid must have even number of items
+	assert len(pyramid) % 2 == 0
+
+	n_levels = len(pyramid) / 2
+
+	levels = []
+
+	for i in range(n_levels):
+		levels.append([pyramid[i], pyramid[i+1]])
+
+	return levels

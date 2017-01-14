@@ -91,7 +91,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 	return np.asarray(accuracies)
 
-def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=False, grid_step=6):
+def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, features='sift', pyramid=None, grid_step=6):
 	start = time.time()
 
 	# read the train and test files
@@ -120,7 +120,7 @@ parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
 parser.add_argument('-feats', help='Features to use', type=str, default='dense_sift')
 parser.add_argument('-grid_step', help='step of the sift grid', type=int, default=6)
-parser.add_argument('--pyramid', dest='pyramid', action='store_true')
+parser.add_argument('-pyramid', nargs='+', type=int, default=None)
 args = parser.parse_args()
 
 print(args)

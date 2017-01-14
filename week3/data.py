@@ -91,7 +91,7 @@ class CustomDetector(object):
 
 		return kpt, des
 
-	def detect_compute(self, gray, pyramid=False):
+	def detect_compute(self, gray, pyramid=None):
 
 		kpt, des = self.get_descriptors(gray)
 
@@ -100,7 +100,7 @@ class CustomDetector(object):
 		descriptors = [des]
 
 		if pyramid: # extract more levels
-			levels = [(2,2), (2,2)]
+			levels = pyramids.get_levels(pyramid)
 
 			pyramid_kps, pyramid_des = pyramids.extract_pyramid_bins(levels, kpt, des, [0,0,gray.shape[0],gray.shape[1]])
 			keypoints += pyramid_kps
