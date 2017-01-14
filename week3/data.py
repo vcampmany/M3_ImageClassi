@@ -27,17 +27,13 @@ def getFoldsDescriptors(SIFTdetector, folds_data, pyramid):
 			ima=cv2.imread(filename)
 			gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 
-			# depending on the parameter pyramid, the variables returned are different
-			# for pyramid=False, kpt and des are lists of keypoints and descriptors (1D)
-			# for pyramid=True, kpt and des are a list of 4 lists of keypoints and descriptors (2D)
+			# the dimensions are: LxNx128 where N: number of points, L=number of pyramid levels
 			kpt, des = SIFTdetector.detect_compute(gray, pyramid)
 
 			folds_descriptors[index]['descriptors'].append(des)
 			folds_descriptors[index]['label_per_descriptor'].append(fold[1][i])
-			if pyramid:
-				print str(kpt.shape[0]*kpt.shape[1])+' extracted keypoints and descriptors'
-			else:
-				print str(len(kpt))+' extracted keypoints and descriptors'
+
+			print str(len(kpt)*len(kpt[0]))+' extracted keypoints and descriptors'
 
 	return folds_descriptors
 
@@ -51,17 +47,12 @@ def getDescriptors(SIFTdetector, images_filenames, labels, pyramid):
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 
-		# depending on the parameter pyramid, the variables returned are different
-		# for pyramid=False, kpt and des are lists of keypoints and descriptors (1D)
-		# for pyramid=True, kpt and des are a list of 4 lists of keypoints and descriptors (2D)
+		# the dimensions are: LxNx128 where N: number of points, L=number of pyramid levels
 		kpt, des = SIFTdetector.detect_compute(gray, pyramid)
 
 		descriptors.append(des)
 		label_per_descriptor.append(labels[i])
-		if pyramid:
-			print str(kpt.shape[0]*kpt.shape[1])+' extracted keypoints and descriptors'
-		else:
-			print str(len(kpt))+' extracted keypoints and descriptors'
+		print str(len(kpt)*len(kpt[0]))+' extracted keypoints and descriptors'
 
 	return descriptors, label_per_descriptor
 
@@ -100,29 +91,55 @@ class CustomDetector(object):
 		return kpt, des
 
 	def detect_compute(self, gray, pyramid=False):
-		if pyramid:
-			kpt = []
-			des = []
-			middle_x = int(gray.shape[0]/2.0)
-			middle_y = int(gray.shape[1]/2.0)
+
+		kpt, des = self.get_descriptors(gray)
+
+		# level 0
+		keypoints = [kpt]
+		descriptors = [des]
+
+		# if pyramid:
+
+		# 	# level 0
+		# 	keypoints = [kpt]
+		# 	descriptors = [des]
+
+		# 	config = [(2,2),(3,3)]
+
+		# 	for level in range()
+
+		# 	print(gray.shape)
+		# 	print(len(kpt))
+		# 	print(kpt[0].pt)
+		# 	print(kpt[0].octave)
+		# 	print(kpt[-1].pt)
+		# 	print(kpt[-1].octave)
+
+		# 	quit()
+
+		# 	kpt = []
+		# 	des = []
+		# 	middle_x = int(gray.shape[0]/2.0)
+		# 	middle_y = int(gray.shape[1]/2.0)
 			
-			# extract keyoints and descriptors by level in a 2x2 grid
-			#########
-			# 1 | 2 #
-			# ----- #
-			# 3 | 4 #
-			#########
+		# 	# extract keyoints and descriptors by level in a 2x2 grid
+		# 	#########
+		# 	# 1 | 2 #
+		# 	# ----- #
+		# 	# 3 | 4 #
+		# 	#########
 
-			level1_kpt, level1_des = self.get_descriptors(gray[:middle_x, :middle_y])
-			level2_kpt, level2_des = self.get_descriptors(gray[middle_x:, :middle_y])
-			level3_kpt, level3_des = self.get_descriptors(gray[:middle_x, middle_y:])
-			level4_kpt, level4_des = self.get_descriptors(gray[middle_x:, middle_y:])
+		# 	level1_kpt, level1_des = self.get_descriptors(gray[:middle_x, :middle_y])
+		# 	level2_kpt, level2_des = self.get_descriptors(gray[middle_x:, :middle_y])
+		# 	level3_kpt, level3_des = self.get_descriptors(gray[:middle_x, middle_y:])
+		# 	level4_kpt, level4_des = self.get_descriptors(gray[middle_x:, middle_y:])
 
-			kpt = np.asarray([level1_kpt, level2_kpt, level3_kpt, level4_kpt])
-			des = np.asarray([level1_des, level2_des, level3_des, level4_des])
-		else:
-			kpt, des = self.get_descriptors(gray)
-		return kpt, des
+		# 	kpt = np.asarray([level1_kpt, level2_kpt, level3_kpt, level4_kpt])
+		# 	des = np.asarray([level1_des, level2_des, level3_des, level4_des])
+		# else:
+		# 	kpt, des = self.get_descriptors(gray)
+
+		return keypoints, descriptors
 		
 		
 def features_detector(nfeatures=100, features='sift', grid_step=6):
