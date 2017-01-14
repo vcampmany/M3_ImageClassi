@@ -6,6 +6,7 @@
 import cv2
 import numpy as np
 from sklearn.decomposition import PCA
+import pyramids
 
 def PCA_reduce(D, n_components):
 	print(D.shape)
@@ -99,38 +100,11 @@ class CustomDetector(object):
 		descriptors = [des]
 
 		if pyramid: # extract more levels
-			levels = [(2,2)]
+			levels = [(2,2), (2,2)]
 
-			for level in levels:
-				x_divisions, y_divisions = level
-
-				min_limit_x, min_limit_y = 0,0
-				max_limit_x, max_limit_y = gray.shape
-
-				nbins = x_divisions*y_divisions # number of spatial bins
-				# initialize lists for this level
-				kpt_level_bins = [[[] for yi in range(y_divisions)] for xi in range(x_divisions)]
-				des_level_bins = [[[] for yi in range(y_divisions)] for xi in range(x_divisions)]
-
-				x_step = max_limit_x / float(x_divisions)
-				y_step = max_limit_y / float(y_divisions)
-
-				for x_div in range(x_divisions):
-					for y_div in range(y_divisions):
-						for i, kp in enumerate(kpt):
-							min_x,max_x = x_step*x_div, x_step*(x_div+1)
-							min_y,max_y = y_step*y_div, y_step*(y_div+1)
-							# check if this keypoint belongs to the current bin
-							if (kp.pt[0] >= min_x and kp.pt[0] < max_x) and (kp.pt[1] >= min_y and kp.pt[1] < max_y):
-								# it belongs!
-								kpt_level_bins[x_div][y_div].append(kpt[i])
-								des_level_bins[x_div][y_div].append(des[i])
-
-				# now append the bin descriptors and keypoints
-				for x_div in range(x_divisions):
-					for y_div in range(y_divisions):
-						keypoints.append(kpt_level_bins[x_div][y_div])
-						descriptors.append(des_level_bins[x_div][y_div])
+			pyramid_kps, pyramid_des = pyramids.extract_pyramid_bins(levels, kpt, des, [0,0,gray.shape[0],gray.shape[1]])
+			keypoints += pyramid_kps
+			descriptors += pyramid_des
 
 		return keypoints, descriptors
 		
