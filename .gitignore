@@ -4,3 +4,5 @@ MIT_split
 *.pyc
 ./*.dat
 week3/path_yael.sh
+week3/outputs/*
+week3/experiments.sh
