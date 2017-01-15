@@ -34,28 +34,38 @@ def spatialPyramidKernel(X, Y, histDim, pyramid):
 	n_samples_1, n_features = X.shape
 	n_samples_2, _ = Y.shape
 
+	pyramid = np.concatenate(([1,1], pyramid))
+
 	levels = len(pyramid) / 2
 	# index where each level of the pyramid starts
 	startOffsets = np.zeros(levels, dtype=np.int)
-	for i in range(len(startOffsets)):
-		for j in range(i-1):
-			startOffsets[i] += pyramid[j*2] + pyramid[j*2+1]
-
-	# index where each level of the pyramid ends
-	endOffsets = np.zeros(levels, dtype=np.int)
+	#startOffsets[0] = 0
 	for i in range(len(startOffsets)):
 		for j in range(i):
-			endOffsets[i] += pyramid[j*2] + pyramid[j*2+1]
+			startOffsets[i] += pyramid[j*2] * pyramid[j*2+1] * histDim
+
+	sizes = np.zeros(levels, dtype=np.int)
+	for i in range(len(sizes)):
+		sizes[i] = pyramid[i*2] * pyramid[i*2+1] * histDim
 	
-	#aux = (1 / 2**levels)*histogramIntersectionKernel(X[:,0:histDim], Y[:,0:histDim])
+	
 	aux = histogramIntersectionKernel(X[:,0:histDim], Y[:,0:histDim])
 	ite = np.zeros((n_samples_1,n_samples_2))
 
+	#print 'startOffsets', startOffsets
+	#print 'sizes', sizes
 	for l in range(1,levels):
-		ite += 2**(-l) * ( histogramIntersectionKernel( X[:, startOffsets[l]*histDim:endOffsets[l]*histDim], \
-									             Y[:, startOffsets[l]*histDim:endOffsets[l]*histDim]) - \
-					histogramIntersectionKernel( X[:, startOffsets[l-1]*histDim:endOffsets[l-1]*histDim], \
-									             Y[:, startOffsets[l-1]*histDim:endOffsets[l-1]*histDim]) )  \
-	
+		ite += 2**(-l) * ( histogramIntersectionKernel( X[:, startOffsets[l]:startOffsets[l]+sizes[l]], \
+									             Y[:, startOffsets[l]:startOffsets[l]+sizes[l]]) - \
+					histogramIntersectionKernel( X[:, startOffsets[l-1]:startOffsets[l-1]+sizes[l-1]], \
+									             Y[:, startOffsets[l-1]:startOffsets[l-1]+sizes[l-1]]) )
+#		#print 'non zero', np.count_nonzero(ite)
+#		#print ite.shape
+
+	#aux = (1 / 2**levels-1)*histogramIntersectionKernel(X[:,0:histDim], Y[:,0:histDim])
+	#for l in range(1,levels):
+	#	ite += 1/2**(levels-l+1) * histogramIntersectionKernel( X[:, startOffsets[l]:startOffsets[l]+sizes[l]], \
+	#								             Y[:, startOffsets[l]:startOffsets[l]+sizes[l]] )
+
 	ker = aux + ite
 	return ker
