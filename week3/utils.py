@@ -34,7 +34,7 @@ def normalize_vector(vec):
 	return normed
 
 def l2_normalize_vector(vec):
-	return normalize(vec, norm='l2').squeeze()
+	return preprocessing.normalize(vec, norm='l2').squeeze()
 
 def l1_normalize_vector(vec):
-	return normalize(vec, norm='l1').squeeze()
+	return preprocessing.normalize(vec, norm='l1').squeeze()

@@ -6,10 +6,11 @@ from sklearn import svm
 from sklearn import preprocessing
 
 import argparse
-from utils import get_cross_val_dataset, normalize_vector
+from utils import get_cross_val_dataset, normalize_vector, l2_normalize_vector
 from data import getFoldsDescriptors, features_detector, PCA_reduce
 from yael import ynumpy
 from codebooks import compute_codebook
+from svm_kernels import spatialPyramidKernel
 
 def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, features, pyramid, grid_step, n_comps, reduction):
 	accuracies = []
@@ -55,18 +56,24 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 				else:
 					des = Train_descriptors[i][j] # for pyramid level j
 				fisher[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]= ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
-				# fisher[i,:]= l2
+				#fisher[i,:] = l2_normalize_vector(fisher[i,:])
 
 		end=time.time()
 		print 'Done in '+str(end-init)+' secs.'
 
 
 		# Train a linear SVM classifier
-
 		stdSlr = StandardScaler().fit(fisher)
 		D_scaled = stdSlr.transform(fisher)
+
 		print 'Training the SVM classifier...'
-		clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
+		
+		if kernel == 'pyramid_match':
+			ker_matrix = spatialPyramidKernel(D_scaled, D_scaled, code_size, pyramid)
+			clf = svm.SVC(kernel='precomputed', C=C)
+			clf.fit(ker_matrix, train_labels)
+		else:
+			clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
 		print 'Done!'
 
 		# get all the test data and predict their labels
@@ -82,8 +89,17 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 				if reduction == 'pca':
 					des = pca_reducer.transform(des)
 				fisher_test[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
+				#fisher_test[i,:] = l2_normalize_vector(fisher_test[i,:])
 
-		accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
+		fisher_test = stdSlr.transform(fisher_test)
+		#fisher_test = l2_normalize_vector(fisher_test)
+		if kernel == 'pyramid_match':
+			predictMatrix = spatialPyramidKernel(fisher_test, D_scaled, code_size, pyramid)
+			#predictions = clf.predict(predictMatrix)
+			#predictions_proba = clf.predict_proba(predictMatrix)
+			accuracy = 100*clf.score(predictMatrix, test_labels)
+		else:
+			accuracy = 100*clf.score(fisher_test, test_labels)
 
 		print 'Fold '+str(fold_i)+' accuracy: ' + str(accuracy)
 
