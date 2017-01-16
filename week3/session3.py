@@ -71,7 +71,7 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 		print 'Reading image '+filename
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-		all_kpt,all_des=SIFTdetector.detect_compute(gray)
+		all_kpt,all_des=SIFTdetector.detect_compute(gray, pyramid)
 		for j in range(len(all_des)): #number of levels
 			des = all_des[j]
 			if reduction == 'pca':
