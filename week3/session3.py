@@ -52,7 +52,13 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 	stdSlr = StandardScaler().fit(fisher)
 	D_scaled = stdSlr.transform(fisher)
 	print 'Training the SVM classifier...'
-	clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
+	
+	if kernel == 'pyramid_match':
+		ker_matrix = spatialPyramidKernel(D_scaled, D_scaled, k*D.shape[1]*2, pyramid)
+		clf = svm.SVC(kernel='precomputed', C=C)
+		clf.fit(ker_matrix, train_labels)
+	else:
+		clf = svm.SVC(kernel=kernel, C=C).fit(D_scaled, train_labels)
 	print 'Done!'
 
 	# get all the test data and predict their labels
@@ -67,7 +73,16 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 			des = pca_reducer.transform(des)
 		fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
 
+	
 	accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
+	fisher_test = stdSlr.transform(fisher_test)
+	if kernel == 'pyramid_match':
+		predictMatrix = spatialPyramidKernel(fisher_test, D_scaled, k*D.shape[1]*2, pyramid)
+		#predictions = clf.predict(predictMatrix)
+		#predictions_proba = clf.predict_proba(predictMatrix)
+		accuracy = 100*clf.score(predictMatrix, test_labels)
+	else:
+		accuracy = 100*clf.score(fisher_test, test_labels)
 
 	print 'Final accuracy: ' + str(accuracy)
 

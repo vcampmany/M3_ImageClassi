@@ -49,16 +49,18 @@ def spatialPyramidKernel(X, Y, histDim, pyramid):
 		sizes[i] = pyramid[i*2] * pyramid[i*2+1] * histDim
 	
 	
-	aux = histogramIntersectionKernel(X[:,0:histDim], Y[:,0:histDim])
+	#aux = histogramIntersectionKernel(X[:,0:histDim], Y[:,0:histDim])
+	aux = histogramIntersectionKernel(X[:,startOffsets[-1]:startOffsets[-1]+sizes[-1]], Y[:,startOffsets[-1]:startOffsets[-1]+sizes[-1]])
 	ite = np.zeros((n_samples_1,n_samples_2))
 
 	#print 'startOffsets', startOffsets
-	#print 'sizes', sizes
-	for l in range(1,levels):
+	##print 'sizes', sizes
+	#for l in range(levels-1, 0, -1):
+	for l in range(0, levels-1):
 		ite += 2**(-l) * ( histogramIntersectionKernel( X[:, startOffsets[l]:startOffsets[l]+sizes[l]], \
 									             Y[:, startOffsets[l]:startOffsets[l]+sizes[l]]) - \
-					histogramIntersectionKernel( X[:, startOffsets[l-1]:startOffsets[l-1]+sizes[l-1]], \
-									             Y[:, startOffsets[l-1]:startOffsets[l-1]+sizes[l-1]]) )
+					histogramIntersectionKernel( X[:, startOffsets[l+1]:startOffsets[l+1]+sizes[l+1]], \
+									             Y[:, startOffsets[l+1]:startOffsets[l+1]+sizes[l+1]]) )
 #		#print 'non zero', np.count_nonzero(ite)
 #		#print ite.shape
 

@@ -69,7 +69,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		print 'Training the SVM classifier...'
 		
 		if kernel == 'pyramid_match':
-			ker_matrix = spatialPyramidKernel(D_scaled, D_scaled, code_size, pyramid)
+			ker_matrix = spatialPyramidKernel(D_scaled, D_scaled, k*D.shape[1]*2, pyramid)
 			clf = svm.SVC(kernel='precomputed', C=C)
 			clf.fit(ker_matrix, train_labels)
 		else:
@@ -94,7 +94,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		fisher_test = stdSlr.transform(fisher_test)
 		#fisher_test = l2_normalize_vector(fisher_test)
 		if kernel == 'pyramid_match':
-			predictMatrix = spatialPyramidKernel(fisher_test, D_scaled, code_size, pyramid)
+			predictMatrix = spatialPyramidKernel(fisher_test, D_scaled, k*D.shape[1]*2, pyramid)
 			#predictions = clf.predict(predictMatrix)
 			#predictions_proba = clf.predict_proba(predictMatrix)
 			accuracy = 100*clf.score(predictMatrix, test_labels)
