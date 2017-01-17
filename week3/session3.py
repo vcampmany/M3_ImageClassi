@@ -25,24 +25,33 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 
 	Train_descriptors, Train_label_per_descriptor = getDescriptors(SIFTdetector, train_images_filenames, train_labels, pyramid)
 
+	Train_descriptors = np.asarray(Train_descriptors)
+
 	# Transform everything to numpy arrays
-	size_descriptors=Train_descriptors[0].shape[1]
-	D=np.zeros((np.sum([len(p) for p in Train_descriptors]),size_descriptors),dtype=np.uint8)
+	size_descriptors=Train_descriptors[0][0].shape[-1]
+	# for D we only need the first level of the pyramid (because it already contains all points)
+	D=np.zeros((np.sum([len(p[0]) for p in Train_descriptors]),size_descriptors),dtype=np.uint8)
 	startingpoint=0
 	for i in range(len(Train_descriptors)):
-		D[startingpoint:startingpoint+len(Train_descriptors[i])]=Train_descriptors[i]
-		startingpoint+=len(Train_descriptors[i])
+		D[startingpoint:startingpoint+len(Train_descriptors[i][0])]=Train_descriptors[i][0]
+		startingpoint+=len(Train_descriptors[i][0])
 	if reduction == 'pca':
 		D, pca_reducer = PCA_reduce(D, n_components)
 
 	k = code_size
 	# Compute Codebook
-	gmm = compute_codebook(D, k, nfeatures, None, features, D.shape[1])
+	gmm = compute_codebook(D, k, nfeatures, None, features, grid_step, D.shape[1])
 
 	init=time.time()
-	fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2),dtype=np.float32)
+	fisher=np.zeros((len(Train_descriptors),k*D.shape[1]*2*Train_descriptors.shape[1]),dtype=np.float32)  #TODO: change 128
 	for i in xrange(len(Train_descriptors)):
-		fisher[i,:]= ynumpy.fisher(gmm, Train_descriptors[i], include = ['mu','sigma'])
+		for j in range(Train_descriptors.shape[1]): #number of levels
+			if reduction == 'pca':
+				des = pca_reducer.transform(Train_descriptors[i][j]) # for pyramid level j
+			else:
+				des = Train_descriptors[i][j] # for pyramid level j
+			fisher[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]= ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
+			# fisher[i,:]= l2
 
 	end=time.time()
 	print 'Done in '+str(end-init)+' secs.'
@@ -62,16 +71,18 @@ def main(nfeatures=100, code_size=32, n_components=60, kernel='linear', C=1, red
 	print 'Done!'
 
 	# get all the test data and predict their labels
-	fisher_test=np.zeros((len(test_images_filenames),k*D.shape[1]*2),dtype=np.float32)
+	fisher_test=np.zeros((len(test_images_filenames),k*D.shape[1]*2*Train_descriptors.shape[1]),dtype=np.float32)
 	for i in range(len(test_images_filenames)):
 		filename=test_images_filenames[i]
 		print 'Reading image '+filename
 		ima=cv2.imread(filename)
 		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
-		kpt,des=SIFTdetector.detect_compute(gray)
-		if reduction == 'pca':
-			des = pca_reducer.transform(des)
-		fisher_test[i,:]=ynumpy.fisher(gmm, des, include = ['mu','sigma'])
+		all_kpt,all_des=SIFTdetector.detect_compute(gray, pyramid)
+		for j in range(len(all_des)): #number of levels
+			des = all_des[j]
+			if reduction == 'pca':
+				des = pca_reducer.transform(des)
+			fisher_test[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
 
 	
 	accuracy = 100*clf.score(stdSlr.transform(fisher_test), test_labels)
@@ -100,7 +111,7 @@ parser.add_argument('-C', help='SVM C parameter', type=float, default=1.0)
 parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
 parser.add_argument('-feats', help='Features to use', type=str, default='dense_sift')
 parser.add_argument('-grid_step', help='step of the sift grid', type=int, default=6)
-parser.add_argument('--pyramid', dest='pyramid', action='store_true')
+parser.add_argument('-pyramid', nargs='+', type=int, default=None)
 args = parser.parse_args()
 
 print(args)
