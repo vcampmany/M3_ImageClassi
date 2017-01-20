@@ -4,11 +4,9 @@ import numpy as np
 import cPickle
 from yael import ynumpy
 
-def compute_codebook(D, code_size, nfeatures, fold_i=None, features='sift', grid_step=None, n_comp=128):
-	if features == 'sift':
-		features = str(nfeatures) # do not change filename for basic sift
-	elif features == 'dense_sift':
-		features = 'dense_sift_'+str(grid_step)
+def compute_codebook(D, code_size, nfeatures, fold_i=None, output='fc2', n_comp=128):
+	
+	features = 'cnn_'+output
 
 	if fold_i is not None:
 		code_name = "codebooks/"+str(code_size)+"_"+str(n_comp)+"_"+features+"_fold_"+str(fold_i)+".dat"

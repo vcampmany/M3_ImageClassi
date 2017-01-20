@@ -18,7 +18,19 @@ def PCA_reduce(D, n_components):
 	pca.fit(D)
 	return pca.transform(D), pca
 
-def getFoldsDescriptors(model, folds_data, pyramid):
+def subsample_feature(tensor, red_ratio):
+	size = (tensor.shape[0]/red_ratio, tensor.shape[1]/red_ratio, tensor.shape[2])
+	sub_sampled = np.zeros(size)
+
+	for i in range(sub_sampled.shape[0]):
+		for j in range(sub_sampled.shape[1]):
+			row = i*red_ratio
+			col = j*red_ratio
+			sub_sampled[i][j][:] = tensor[row, col, :]
+	return sub_sampled
+
+
+def getFoldsDescriptors(model, folds_data, decision):
 	folds_descriptors = {}
 
 	for index,fold in enumerate(folds_data):
@@ -29,10 +41,6 @@ def getFoldsDescriptors(model, folds_data, pyramid):
 		for i in xrange(len(fold[0])):
 			filename=fold[0][i]
 			print 'Reading image '+filename
-			#ima=cv2.imread(filename)
-
-			# the dimensions are: LxNx128 where N: number of points, L=number of pyramid levels
-			#kpt, des = SIFTdetector.detect_compute(gray, pyramid)
 
 			# Read the image and preprocess
 			img = image.load_img(filename, target_size=(224, 224))
@@ -41,8 +49,15 @@ def getFoldsDescriptors(model, folds_data, pyramid):
 			x = preprocess_input(x)
 
 			# do the prediction
-			features = model.predict(x)
+			features = [model.predict(x)]
 
+			if 'bow' == decision or 'fisher' == decision:
+				features = features[0]
+				features = np.squeeze(features)
+				features = subsample_feature(features, 4)
+				features = np.reshape(features, (features.shape[0]*features.shape[1], features.shape[2]))
+				features = [features]
+				
 			folds_descriptors[index]['descriptors'].append(features)
 			folds_descriptors[index]['label_per_descriptor'].append(fold[1][i])
 
