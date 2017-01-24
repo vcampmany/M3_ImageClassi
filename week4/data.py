@@ -18,7 +18,7 @@ def PCA_reduce(D, n_components):
 	pca.fit(D)
 	return pca.transform(D), pca
 
-def subsample_feature(tensor, red_ratio):
+def subsample_feature(tensor, red_ratio, sampling_type):
 	size = (tensor.shape[0]/red_ratio, tensor.shape[1]/red_ratio, tensor.shape[2])
 	sub_sampled = np.zeros(size)
 
@@ -26,11 +26,17 @@ def subsample_feature(tensor, red_ratio):
 		for j in range(sub_sampled.shape[1]):
 			row = i*red_ratio
 			col = j*red_ratio
-			sub_sampled[i][j][:] = tensor[row, col, :]
+			if sampling_type == 'avg':
+				sub_sampled[i][j][:] = tensor[row:row+red_ratio, col:col+red_ratio, :].mean(axis=0).mean(axis=0)
+			elif sampling_type == 'default':
+				sub_sampled[i][j][:] = tensor[row, col, :]
+			else:
+				print('Unknown value for sampling_type')
+				quit()
 	return sub_sampled
 
 
-def getFoldsDescriptors(model, folds_data, decision):
+def getFoldsDescriptors(model, folds_data, decision, sampling_step, sampling_type):
 	folds_descriptors = {}
 
 	for index,fold in enumerate(folds_data):
@@ -54,7 +60,7 @@ def getFoldsDescriptors(model, folds_data, decision):
 			if 'bow' == decision or 'fisher' == decision:
 				features = features[0]
 				features = np.squeeze(features)
-				features = subsample_feature(features, 4)
+				features = subsample_feature(features, sampling_step, sampling_type)
 				features = np.reshape(features, (features.shape[0]*features.shape[1], features.shape[2]))
 				features = [features]
 				
@@ -63,22 +69,32 @@ def getFoldsDescriptors(model, folds_data, decision):
 
 	return folds_descriptors
 
-def getDescriptors(SIFTdetector, images_filenames, labels, pyramid):
+def getDescriptors(model, images_filenames, labels, decision, sampling_step, sampling_type):
 	descriptors = []
 	label_per_descriptor = []
 
 	for i in xrange(len(images_filenames)):
 		filename=images_filenames[i]
 		print 'Reading image '+filename
-		ima=cv2.imread(filename)
-		gray=cv2.cvtColor(ima,cv2.COLOR_BGR2GRAY)
 
-		# the dimensions are: LxNx128 where N: number of points, L=number of pyramid levels
-		kpt, des = SIFTdetector.detect_compute(gray, pyramid)
+		# Read the image and preprocess
+		img = image.load_img(filename, target_size=(224, 224))
+		x = image.img_to_array(img)
+		x = np.expand_dims(x, axis=0)
+		x = preprocess_input(x)
 
-		descriptors.append(des)
+		# do the prediction
+		features = [model.predict(x)]
+
+		if 'bow' == decision or 'fisher' == decision:
+			features = features[0]
+			features = np.squeeze(features)
+			features = subsample_feature(features, sampling_step, sampling_type)
+			features = np.reshape(features, (features.shape[0]*features.shape[1], features.shape[2]))
+			features = [features]
+
+		descriptors.append(features)
 		label_per_descriptor.append(labels[i])
-		print str(sum([len(level) for level in kpt]))+' extracted keypoints and descriptors'
 
 	return descriptors, label_per_descriptor
 

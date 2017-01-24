@@ -10,7 +10,7 @@ from data import getFoldsDescriptors, cnn_features, PCA_reduce,subsample_feature
 from yael import ynumpy
 from codebooks import compute_codebook
 
-def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, output_layer, n_comps, reduction, decision):
+def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kernel, C, output_layer, n_comps, reduction, decision, sampling_step, sampling_type):
 	accuracies = []
 
 	for fold_i in range(folds_num): # 5 folds
@@ -40,7 +40,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		if decision == 'bow':
 			k = code_size
 			# Compute Codebook
-			gmm = compute_codebook(D, k, nfeatures, fold_i, output_layer, D.shape[1])
+			gmm = compute_codebook(D, k, nfeatures, fold_i, output_layer, D.shape[1], sampling_step, sampling_type)
 
 			init=time.time()
 			samples=np.zeros((len(Train_descriptors),k*D.shape[1]*2*Train_descriptors.shape[1]),dtype=np.float32)  #TODO: change 128
@@ -74,21 +74,23 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 		test_labels = folds_descriptors[fold_i]['label_per_descriptor']
 
 		test_images_desc = np.asarray(test_images_desc)
-		test_images_desc = test_images_desc.squeeze()
+		#test_images_desc = test_images_desc.squeeze()
 		print test_images_desc.shape
 
 		# Apply BoW
 		if decision == 'bow':
-			test_images_desc=np.zeros((len(test_images_desc),k*D.shape[1]*2*test_images_desc.shape[1]),dtype=np.float32)
+			fisher_test=np.zeros((len(test_images_desc),k*D.shape[1]*2*test_images_desc.shape[1]),dtype=np.float32)
 			for i in range(len(test_images_desc)):
 				for j in range(test_images_desc.shape[1]): #number of levels
 					des = test_images_desc[i][j] # now only working with 1 PYRAMID LEVEL [0]
 					if reduction == 'pca':
 						des = pca_reducer.transform(des)
-					test_images_desc[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
+					fisher_test[i,j*k*D.shape[1]*2:(j+1)*k*D.shape[1]*2]=ynumpy.fisher(gmm, np.float32(des), include = ['mu','sigma'])
+			test_images_desc = fisher_test
 		else:
 			test_images_desc = test_images_desc.squeeze()
-
+			if reduction == 'pca':
+				test_images_desc = pca_reducer.transform(test_images_desc)
 
 		test_images_desc = stdSlr.transform(test_images_desc)
 		accuracy = 100*clf.score(test_images_desc, test_labels)
@@ -99,7 +101,7 @@ def getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size, kerne
 
 	return np.asarray(accuracies)
 
-def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, output_layer='fc2', decision='svm'):
+def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, reduction=None, output_layer='fc2', decision='svm', sampling_step=4, sampling_type='default'):
 	start = time.time()
 
 	# read the train and test files
@@ -112,11 +114,11 @@ def main(nfeatures=100, code_size=512, n_components=60, kernel='linear', C=1, re
 	# read all the images per train
 	# extract SIFT keypoints and descriptors
 	# store descriptors in a python list of numpy arrays
-	folds_descriptors = getFoldsDescriptors(cnn_model, folds_data,decision)
+	folds_descriptors = getFoldsDescriptors(cnn_model, folds_data, decision, sampling_step, sampling_type)
 
 	# now perform de cross-val
 	folds_num = 5
-	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,output_layer, n_components, reduction, decision)
+	accuracies = getCrossVal(folds_num, folds_descriptors, start, nfeatures, code_size,  kernel, C,output_layer, n_components, reduction, decision, sampling_step, sampling_type)
 
 	print('Final accuracy: %f (%f)' % (np.mean(accuracies), np.std(accuracies)))
 
@@ -130,8 +132,9 @@ parser.add_argument('-reduce', help='Feature reduction', type=str, default=None)
 parser.add_argument('-output_layer', help='output layer', type=str, default='fc2')
 parser.add_argument('-decision', help='svm or bow ', type=str, default='svm')
 parser.add_argument('-sampling_step', help='step of the subsampling', type=int, default=4)
+parser.add_argument('-sampling_type', help='Type of the subsampling ("default" or "average")', type=str, default='default')
 args = parser.parse_args()
 
 print(args)
 
-main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C, args.reduce, args.output_layer, args.decision)
+main(args.n_feat, args.code_size, args.n_comp, args.kern, args.C, args.reduce, args.output_layer, args.decision, args.sampling_step, args.sampling_type)

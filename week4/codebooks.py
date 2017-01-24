@@ -4,9 +4,9 @@ import numpy as np
 import cPickle
 from yael import ynumpy
 
-def compute_codebook(D, code_size, nfeatures, fold_i=None, output='fc2', n_comp=128):
+def compute_codebook(D, code_size, nfeatures, fold_i=None, output='fc2', n_comp=128, sub_step=4, sub_type='default'):
 	
-	features = 'cnn_'+output
+	features = 'cnn_'+output+'_samp_'+sub_type+'_'+str(sub_step)
 
 	if fold_i is not None:
 		code_name = "codebooks/"+str(code_size)+"_"+str(n_comp)+"_"+features+"_fold_"+str(fold_i)+".dat"
