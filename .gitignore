@@ -6,3 +6,11 @@ MIT_split
 week3/path_yael.sh
 week3/outputs/*
 week3/experiments.sh
+week5/*.png
+week5/task1_results
+week5/task2_results
+week5/task3_results
+week5/task4_results
+week5/task5_results
+week5/dataug_samples
+week5/*.dat
